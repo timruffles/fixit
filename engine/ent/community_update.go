@@ -8,6 +8,7 @@ import (
 	"fixit/engine/ent/community"
 	"fixit/engine/ent/predicate"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -55,6 +56,12 @@ func (cu *CommunityUpdate) SetNillableTitle(s *string) *CommunityUpdate {
 	return cu
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (cu *CommunityUpdate) SetUpdatedAt(t time.Time) *CommunityUpdate {
+	cu.mutation.SetUpdatedAt(t)
+	return cu
+}
+
 // Mutation returns the CommunityMutation object of the builder.
 func (cu *CommunityUpdate) Mutation() *CommunityMutation {
 	return cu.mutation
@@ -62,6 +69,7 @@ func (cu *CommunityUpdate) Mutation() *CommunityMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CommunityUpdate) Save(ctx context.Context) (int, error) {
+	cu.defaults()
 	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
@@ -84,6 +92,14 @@ func (cu *CommunityUpdate) Exec(ctx context.Context) error {
 func (cu *CommunityUpdate) ExecX(ctx context.Context) {
 	if err := cu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (cu *CommunityUpdate) defaults() {
+	if _, ok := cu.mutation.UpdatedAt(); !ok {
+		v := community.UpdateDefaultUpdatedAt()
+		cu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -119,6 +135,9 @@ func (cu *CommunityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.Title(); ok {
 		_spec.SetField(community.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := cu.mutation.UpdatedAt(); ok {
+		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -168,6 +187,12 @@ func (cuo *CommunityUpdateOne) SetNillableTitle(s *string) *CommunityUpdateOne {
 	return cuo
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (cuo *CommunityUpdateOne) SetUpdatedAt(t time.Time) *CommunityUpdateOne {
+	cuo.mutation.SetUpdatedAt(t)
+	return cuo
+}
+
 // Mutation returns the CommunityMutation object of the builder.
 func (cuo *CommunityUpdateOne) Mutation() *CommunityMutation {
 	return cuo.mutation
@@ -188,6 +213,7 @@ func (cuo *CommunityUpdateOne) Select(field string, fields ...string) *Community
 
 // Save executes the query and returns the updated Community entity.
 func (cuo *CommunityUpdateOne) Save(ctx context.Context) (*Community, error) {
+	cuo.defaults()
 	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
@@ -210,6 +236,14 @@ func (cuo *CommunityUpdateOne) Exec(ctx context.Context) error {
 func (cuo *CommunityUpdateOne) ExecX(ctx context.Context) {
 	if err := cuo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (cuo *CommunityUpdateOne) defaults() {
+	if _, ok := cuo.mutation.UpdatedAt(); !ok {
+		v := community.UpdateDefaultUpdatedAt()
+		cuo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -262,6 +296,9 @@ func (cuo *CommunityUpdateOne) sqlSave(ctx context.Context) (_node *Community, e
 	}
 	if value, ok := cuo.mutation.Title(); ok {
 		_spec.SetField(community.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)
 	}
 	_node = &Community{config: cuo.config}
 	_spec.Assign = _node.assignValues

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fixit/engine/ent/community"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -29,6 +30,34 @@ func (cc *CommunityCreate) SetName(s string) *CommunityCreate {
 // SetTitle sets the "title" field.
 func (cc *CommunityCreate) SetTitle(s string) *CommunityCreate {
 	cc.mutation.SetTitle(s)
+	return cc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (cc *CommunityCreate) SetCreatedAt(t time.Time) *CommunityCreate {
+	cc.mutation.SetCreatedAt(t)
+	return cc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (cc *CommunityCreate) SetNillableCreatedAt(t *time.Time) *CommunityCreate {
+	if t != nil {
+		cc.SetCreatedAt(*t)
+	}
+	return cc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (cc *CommunityCreate) SetUpdatedAt(t time.Time) *CommunityCreate {
+	cc.mutation.SetUpdatedAt(t)
+	return cc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (cc *CommunityCreate) SetNillableUpdatedAt(t *time.Time) *CommunityCreate {
+	if t != nil {
+		cc.SetUpdatedAt(*t)
+	}
 	return cc
 }
 
@@ -81,6 +110,14 @@ func (cc *CommunityCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (cc *CommunityCreate) defaults() {
+	if _, ok := cc.mutation.CreatedAt(); !ok {
+		v := community.DefaultCreatedAt()
+		cc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := cc.mutation.UpdatedAt(); !ok {
+		v := community.DefaultUpdatedAt()
+		cc.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := cc.mutation.ID(); !ok {
 		v := community.DefaultID()
 		cc.mutation.SetID(v)
@@ -104,6 +141,12 @@ func (cc *CommunityCreate) check() error {
 		if err := community.TitleValidator(v); err != nil {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Community.title": %w`, err)}
 		}
+	}
+	if _, ok := cc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Community.created_at"`)}
+	}
+	if _, ok := cc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Community.updated_at"`)}
 	}
 	return nil
 }
@@ -147,6 +190,14 @@ func (cc *CommunityCreate) createSpec() (*Community, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.Title(); ok {
 		_spec.SetField(community.FieldTitle, field.TypeString, value)
 		_node.Title = value
+	}
+	if value, ok := cc.mutation.CreatedAt(); ok {
+		_spec.SetField(community.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := cc.mutation.UpdatedAt(); ok {
+		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	return _node, _spec
 }

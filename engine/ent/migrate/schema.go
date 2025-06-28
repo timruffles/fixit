@@ -3,40 +3,51 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
-	// CommunitiesColumns holds the columns for the "communities" table.
-	CommunitiesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
+	// CommunityColumns holds the columns for the "community" table.
+	CommunityColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Size: 128},
 		{Name: "title", Type: field.TypeString, Size: 128},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 	}
-	// CommunitiesTable holds the schema information for the "communities" table.
-	CommunitiesTable = &schema.Table{
-		Name:       "communities",
-		Columns:    CommunitiesColumns,
-		PrimaryKey: []*schema.Column{CommunitiesColumns[0]},
+	// CommunityTable holds the schema information for the "community" table.
+	CommunityTable = &schema.Table{
+		Name:       "community",
+		Columns:    CommunityColumns,
+		PrimaryKey: []*schema.Column{CommunityColumns[0]},
 	}
-	// PostsColumns holds the columns for the "posts" table.
-	PostsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
+	// PostColumns holds the columns for the "post" table.
+	PostColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "title", Type: field.TypeString, Size: 128},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 	}
-	// PostsTable holds the schema information for the "posts" table.
-	PostsTable = &schema.Table{
-		Name:       "posts",
-		Columns:    PostsColumns,
-		PrimaryKey: []*schema.Column{PostsColumns[0]},
+	// PostTable holds the schema information for the "post" table.
+	PostTable = &schema.Table{
+		Name:       "post",
+		Columns:    PostColumns,
+		PrimaryKey: []*schema.Column{PostColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		CommunitiesTable,
-		PostsTable,
+		CommunityTable,
+		PostTable,
 	}
 )
 
 func init() {
+	CommunityTable.Annotation = &entsql.Annotation{
+		Table: "community",
+	}
+	PostTable.Annotation = &entsql.Annotation{
+		Table: "post",
+	}
 }

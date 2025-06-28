@@ -6,6 +6,7 @@ import (
 	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/schema"
+	"time"
 
 	uuid "github.com/gofrs/uuid/v5"
 )
@@ -52,6 +53,16 @@ func init() {
 			return nil
 		}
 	}()
+	// communityDescCreatedAt is the schema descriptor for created_at field.
+	communityDescCreatedAt := communityFields[3].Descriptor()
+	// community.DefaultCreatedAt holds the default value on creation for the created_at field.
+	community.DefaultCreatedAt = communityDescCreatedAt.Default.(func() time.Time)
+	// communityDescUpdatedAt is the schema descriptor for updated_at field.
+	communityDescUpdatedAt := communityFields[4].Descriptor()
+	// community.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	community.DefaultUpdatedAt = communityDescUpdatedAt.Default.(func() time.Time)
+	// community.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	community.UpdateDefaultUpdatedAt = communityDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// communityDescID is the schema descriptor for id field.
 	communityDescID := communityFields[0].Descriptor()
 	// community.DefaultID holds the default value on creation for the id field.
@@ -76,6 +87,16 @@ func init() {
 			return nil
 		}
 	}()
+	// postDescCreatedAt is the schema descriptor for created_at field.
+	postDescCreatedAt := postFields[2].Descriptor()
+	// post.DefaultCreatedAt holds the default value on creation for the created_at field.
+	post.DefaultCreatedAt = postDescCreatedAt.Default.(func() time.Time)
+	// postDescUpdatedAt is the schema descriptor for updated_at field.
+	postDescUpdatedAt := postFields[3].Descriptor()
+	// post.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	post.DefaultUpdatedAt = postDescUpdatedAt.Default.(func() time.Time)
+	// post.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	post.UpdateDefaultUpdatedAt = postDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// postDescID is the schema descriptor for id field.
 	postDescID := postFields[0].Descriptor()
 	// post.DefaultID holds the default value on creation for the id field.
