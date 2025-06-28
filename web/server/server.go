@@ -18,15 +18,13 @@ type Handler interface {
 }
 
 type Server struct {
-	router   *mux.Router
-	handlers []Handler
-	client   *ent.Client
+	router *mux.Router
+	client *ent.Client
 }
 
 func New() *Server {
 	return &Server{
-		router:   mux.NewRouter(),
-		handlers: make([]Handler, 0),
+		router: mux.NewRouter(),
 	}
 }
 
@@ -52,14 +50,7 @@ func (s *Server) Client() *ent.Client {
 }
 
 func (s *Server) RegisterHandler(handler Handler) {
-	s.handlers = append(s.handlers, handler)
 	handler.RegisterRoutes(s.router)
-}
-
-func (s *Server) RegisterHandlers(handlers ...Handler) {
-	for _, handler := range handlers {
-		s.RegisterHandler(handler)
-	}
 }
 
 func (s *Server) Start(addr string) error {

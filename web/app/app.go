@@ -29,7 +29,6 @@ func New(cfg Config) (*App, error) {
 }
 
 func (a *App) Start() error {
-
 	if err := a.server.InitDB(a.cfg.DatabaseURL); err != nil {
 		return err
 	}
