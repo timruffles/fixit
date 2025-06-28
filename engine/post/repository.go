@@ -57,6 +57,22 @@ func (r *Repository) Create(ctx context.Context, fields PostCreateFields) (*ent.
 	return post, nil
 }
 
+func (r *Repository) GetByIDWithReplies(ctx context.Context, id uuid.UUID) (*ent.Post, error) {
+	post, err := r.client.Post.Query().
+		Where(post.ID(id)).
+		WithUser().
+		WithCommunity().
+		WithReplies(func(q *ent.PostQuery) {
+			q.WithUser().Order(ent.Asc(post.FieldCreatedAt))
+		}).
+		Only(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return post, nil
+}
+
 func (r *Repository) validateRole(ctx context.Context, fields PostCreateFields) error {
 	switch fields.Role {
 	case post.RoleSolution:

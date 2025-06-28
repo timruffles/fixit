@@ -35,7 +35,7 @@ func (Post) Fields() []ent.Field {
 			MinLen(5).
 			MaxLen(128),
 		field.Enum("role").
-			Values("issue", "solution", "verification").
+			Values("issue", "solution", "verification", "chat").
 			Default("issue"),
 		field.Time("created_at").
 			Default(time.Now).

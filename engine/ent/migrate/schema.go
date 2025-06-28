@@ -27,7 +27,7 @@ var (
 	PostColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "title", Type: field.TypeString, Size: 128},
-		{Name: "role", Type: field.TypeEnum, Enums: []string{"issue", "solution", "verification"}, Default: "issue"},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"issue", "solution", "verification", "chat"}, Default: "issue"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "tags", Type: field.TypeJSON, Nullable: true},

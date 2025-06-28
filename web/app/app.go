@@ -7,6 +7,7 @@ import (
 
 	"fixit/engine/auth"
 	"fixit/engine/community"
+	enginePost "fixit/engine/post"
 	webcommunity "fixit/web/community"
 	"fixit/web/list"
 	"fixit/web/post"
@@ -54,7 +55,11 @@ func (a *App) Initialize() error {
 
 	listHandler := list.New(a.server.Client())
 	a.server.RegisterHandler(listHandler)
-	a.server.RegisterHandler(post.New())
+	
+	postRepo := enginePost.New(a.server.Client())
+	postHandler := post.New(postRepo)
+	a.server.RegisterHandler(postHandler)
+	
 	a.server.RegisterHandler(webcommunity.New([]byte(a.cfg.Auth.SessionKey)))
 
 	return nil

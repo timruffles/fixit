@@ -264,6 +264,55 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 	assert.NotNil(t, verificationPost)
 }
 
+func TestRepository_GetByIDWithReplies(t *testing.T) {
+	client := setupTestDB(t)
+	ctx := context.Background()
+	repo := post.New(client)
+
+	// Create test data
+	user := factory.User(t, client, "get-by-id-user-*")
+	community := factory.Community(t, client, "get-by-id-community-*")
+
+	// Create main post
+	mainPost, err := repo.Create(ctx, post.PostCreateFields{
+		Title:       "Test Issue Post",
+		Role:        entPost.RoleIssue,
+		Tags:        []string{"issue", "test"},
+		UserID:      user.ID,
+		CommunityID: community.ID,
+	})
+	require.NoError(t, err)
+
+	// Create a reply
+	otherUser := factory.User(t, client, "get-by-id-other-*")
+	_, err = repo.Create(ctx, post.PostCreateFields{
+		Title:       "Test Solution",
+		Role:        entPost.RoleSolution,
+		ReplyTo:     &mainPost.ID,
+		UserID:      otherUser.ID,
+		CommunityID: community.ID,
+	})
+	require.NoError(t, err)
+
+	// Test GetByIDWithReplies
+	retrievedPost, err := repo.GetByIDWithReplies(ctx, mainPost.ID)
+	require.NoError(t, err)
+	assert.NotNil(t, retrievedPost)
+	assert.Equal(t, mainPost.ID, retrievedPost.ID)
+	assert.Equal(t, "Test Issue Post", retrievedPost.Title)
+	
+	// Check that edges are loaded
+	assert.NotNil(t, retrievedPost.Edges.User)
+	assert.Equal(t, user.ID, retrievedPost.Edges.User.ID)
+	assert.NotNil(t, retrievedPost.Edges.Community)
+	assert.Equal(t, community.ID, retrievedPost.Edges.Community.ID)
+	
+	// Check replies are loaded
+	assert.Len(t, retrievedPost.Edges.Replies, 1)
+	assert.Equal(t, "Test Solution", retrievedPost.Edges.Replies[0].Title)
+	assert.NotNil(t, retrievedPost.Edges.Replies[0].Edges.User)
+}
+
 func setupTestDB(t *testing.T) *ent.Client {
 	// Use enttest with migrations - it handles cleaning up for us
 	// The WithMigrateOptions ensures we get a fresh schema each time
