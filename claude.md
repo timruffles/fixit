@@ -1,0 +1,5 @@
+- use tailwind for css
+- use cobra for clis
+- use pkgerrors for returning errors not from other packages in this project (e.g. use `pkgerrors.WithStack(err)` on errors from stdlib or third-party libraries)
+- use testify assert for test assertions, and use require to prevent nil pointer exceptions etc (i.e. places the test should halt)
+- use table-driven tests tests with > 3 cases, where there's a lot of setup. use multiple calls to test fn and assert results if that's much shorter
