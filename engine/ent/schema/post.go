@@ -34,6 +34,9 @@ func (Post) Fields() []ent.Field {
 		field.String("title").
 			MinLen(5).
 			MaxLen(128),
+		field.Enum("role").
+			Values("issue", "solution", "verification").
+			Default("issue"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -44,14 +47,15 @@ func (Post) Fields() []ent.Field {
 			Optional().
 			Default([]string{}),
 		field.UUID("reply_to", uuid.UUID{}).
-			Optional(),
+			Nillable(),
 	}
 }
 
 func (Post) Edges() []ent.Edge {
 	return []ent.Edge{
 		// o2o
-		edge.To("user", User.Type).Unique(),
+		edge.To("user", User.Type).Unique().Required(),
+		edge.To("community", Community.Type).Unique().Required(),
 		edge.To("parent", Post.Type).
 			Field("reply_to").
 			Unique().

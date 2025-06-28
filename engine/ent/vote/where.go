@@ -56,11 +56,6 @@ func IDLTE(id uuid.UUID) predicate.Vote {
 	return predicate.Vote(sql.FieldLTE(FieldID, id))
 }
 
-// Kind applies equality check predicate on the "kind" field. It's identical to KindEQ.
-func Kind(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldEQ(FieldKind, v))
-}
-
 // Value applies equality check predicate on the "value" field. It's identical to ValueEQ.
 func Value(v int) predicate.Vote {
 	return predicate.Vote(sql.FieldEQ(FieldValue, v))
@@ -77,68 +72,23 @@ func UpdatedAt(v time.Time) predicate.Vote {
 }
 
 // KindEQ applies the EQ predicate on the "kind" field.
-func KindEQ(v string) predicate.Vote {
+func KindEQ(v Kind) predicate.Vote {
 	return predicate.Vote(sql.FieldEQ(FieldKind, v))
 }
 
 // KindNEQ applies the NEQ predicate on the "kind" field.
-func KindNEQ(v string) predicate.Vote {
+func KindNEQ(v Kind) predicate.Vote {
 	return predicate.Vote(sql.FieldNEQ(FieldKind, v))
 }
 
 // KindIn applies the In predicate on the "kind" field.
-func KindIn(vs ...string) predicate.Vote {
+func KindIn(vs ...Kind) predicate.Vote {
 	return predicate.Vote(sql.FieldIn(FieldKind, vs...))
 }
 
 // KindNotIn applies the NotIn predicate on the "kind" field.
-func KindNotIn(vs ...string) predicate.Vote {
+func KindNotIn(vs ...Kind) predicate.Vote {
 	return predicate.Vote(sql.FieldNotIn(FieldKind, vs...))
-}
-
-// KindGT applies the GT predicate on the "kind" field.
-func KindGT(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldGT(FieldKind, v))
-}
-
-// KindGTE applies the GTE predicate on the "kind" field.
-func KindGTE(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldGTE(FieldKind, v))
-}
-
-// KindLT applies the LT predicate on the "kind" field.
-func KindLT(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldLT(FieldKind, v))
-}
-
-// KindLTE applies the LTE predicate on the "kind" field.
-func KindLTE(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldLTE(FieldKind, v))
-}
-
-// KindContains applies the Contains predicate on the "kind" field.
-func KindContains(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldContains(FieldKind, v))
-}
-
-// KindHasPrefix applies the HasPrefix predicate on the "kind" field.
-func KindHasPrefix(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldHasPrefix(FieldKind, v))
-}
-
-// KindHasSuffix applies the HasSuffix predicate on the "kind" field.
-func KindHasSuffix(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldHasSuffix(FieldKind, v))
-}
-
-// KindEqualFold applies the EqualFold predicate on the "kind" field.
-func KindEqualFold(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldEqualFold(FieldKind, v))
-}
-
-// KindContainsFold applies the ContainsFold predicate on the "kind" field.
-func KindContainsFold(v string) predicate.Vote {
-	return predicate.Vote(sql.FieldContainsFold(FieldKind, v))
 }
 
 // ValueEQ applies the EQ predicate on the "value" field.

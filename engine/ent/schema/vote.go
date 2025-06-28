@@ -11,12 +11,14 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
+//go:generate go-enum --names
+
 // Vote
 type Vote struct {
 	ent.Schema
 }
 
-// ENUM(interesting,solved)
+// ENUM(interesting,truthful)
 type VoteKind string
 
 func (Vote) Annotations() []schema.Annotation {
@@ -28,7 +30,8 @@ func (Vote) Annotations() []schema.Annotation {
 func (Vote) Fields() []ent.Field {
 	return []ent.Field{
 		uuidField(),
-		field.String("kind"),
+		field.Enum("kind").
+			Values("interesting", "truthful"),
 		field.Int("value"),
 		field.Time("created_at").
 			Default(time.Now).

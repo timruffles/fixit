@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"fixit/engine/auth"
+	"fixit/engine/config"
 	"fixit/web/app"
 )
 
@@ -22,7 +23,7 @@ var testConfig app.Config
 
 func setup() {
 	testConfig = app.Config{
-		DatabaseURL: "postgres://fixit:password@localhost:5432/fixit_test?sslmode=disable",
+		DatabaseURL: config.TestDBURL,
 		Port:        0,
 		Auth: auth.Config{
 			SessionKey:  "test-32-byte-secret-key-here!!!",

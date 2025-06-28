@@ -3,6 +3,7 @@
 package post
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -17,6 +18,8 @@ const (
 	FieldID = "id"
 	// FieldTitle holds the string denoting the title field in the database.
 	FieldTitle = "title"
+	// FieldRole holds the string denoting the role field in the database.
+	FieldRole = "role"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -27,6 +30,8 @@ const (
 	FieldReplyTo = "reply_to"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
+	// EdgeCommunity holds the string denoting the community edge name in mutations.
+	EdgeCommunity = "community"
 	// EdgeReplies holds the string denoting the replies edge name in mutations.
 	EdgeReplies = "replies"
 	// EdgeParent holds the string denoting the parent edge name in mutations.
@@ -42,6 +47,13 @@ const (
 	UserInverseTable = "user"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "post_user"
+	// CommunityTable is the table that holds the community relation/edge.
+	CommunityTable = "post"
+	// CommunityInverseTable is the table name for the Community entity.
+	// It exists in this package in order to avoid circular dependency with the "community" package.
+	CommunityInverseTable = "community"
+	// CommunityColumn is the table column denoting the community relation/edge.
+	CommunityColumn = "post_community"
 	// RepliesTable is the table that holds the replies relation/edge.
 	RepliesTable = "post"
 	// RepliesColumn is the table column denoting the replies relation/edge.
@@ -63,6 +75,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldTitle,
+	FieldRole,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldTags,
@@ -73,6 +86,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"post_user",
+	"post_community",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -105,6 +119,33 @@ var (
 	DefaultID func() uuid.UUID
 )
 
+// Role defines the type for the "role" enum field.
+type Role string
+
+// RoleIssue is the default value of the Role enum.
+const DefaultRole = RoleIssue
+
+// Role values.
+const (
+	RoleIssue        Role = "issue"
+	RoleSolution     Role = "solution"
+	RoleVerification Role = "verification"
+)
+
+func (r Role) String() string {
+	return string(r)
+}
+
+// RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
+func RoleValidator(r Role) error {
+	switch r {
+	case RoleIssue, RoleSolution, RoleVerification:
+		return nil
+	default:
+		return fmt.Errorf("post: invalid enum value for role field: %q", r)
+	}
+}
+
 // OrderOption defines the ordering options for the Post queries.
 type OrderOption func(*sql.Selector)
 
@@ -116,6 +157,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByTitle orders the results by the title field.
 func ByTitle(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTitle, opts...).ToFunc()
+}
+
+// ByRole orders the results by the role field.
+func ByRole(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRole, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -137,6 +183,13 @@ func ByReplyTo(opts ...sql.OrderTermOption) OrderOption {
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByCommunityField orders the results by community field.
+func ByCommunityField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommunityStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -179,6 +232,13 @@ func newUserStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, UserTable, UserColumn),
+	)
+}
+func newCommunityStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommunityInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, CommunityTable, CommunityColumn),
 	)
 }
 func newRepliesStep() *sqlgraph.Step {

@@ -3,6 +3,7 @@
 package vote
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -86,6 +87,29 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Kind defines the type for the "kind" enum field.
+type Kind string
+
+// Kind values.
+const (
+	KindInteresting Kind = "interesting"
+	KindTruthful    Kind = "truthful"
+)
+
+func (k Kind) String() string {
+	return string(k)
+}
+
+// KindValidator is a validator for the "kind" field enum values. It is called by the builders before save.
+func KindValidator(k Kind) error {
+	switch k {
+	case KindInteresting, KindTruthful:
+		return nil
+	default:
+		return fmt.Errorf("vote: invalid enum value for kind field: %q", k)
+	}
+}
 
 // OrderOption defines the ordering options for the Vote queries.
 type OrderOption func(*sql.Selector)

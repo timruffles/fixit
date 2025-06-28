@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -23,6 +24,7 @@ func Wrap(fn Fn) func(http.ResponseWriter,
 	return func(writer http.ResponseWriter, request *http.Request) {
 		resI, err := fn(request)
 		if err != nil {
+			slog.Error("error in handler", "err", err)
 			writer.WriteHeader(500)
 			return
 		}

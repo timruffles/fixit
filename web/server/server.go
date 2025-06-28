@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -23,8 +24,22 @@ type Server struct {
 }
 
 func New() *Server {
+	r := mux.NewRouter()
+	r.Use(func(wrapped http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			m := httpsnoop.CaptureMetrics(wrapped, writer, request)
+			slog.Info(
+				"hit",
+				"url", request.URL,
+				"method", request.Method,
+				"status_code", m.Code,
+				"duration_ms", m.Duration.Milliseconds(),
+				"response_bytes", m.Written,
+			)
+		})
+	})
 	return &Server{
-		router: mux.NewRouter(),
+		router: r,
 	}
 }
 

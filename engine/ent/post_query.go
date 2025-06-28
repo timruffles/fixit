@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"database/sql/driver"
+	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/predicate"
 	"fixit/engine/ent/user"
@@ -22,15 +23,16 @@ import (
 // PostQuery is the builder for querying Post entities.
 type PostQuery struct {
 	config
-	ctx         *QueryContext
-	order       []post.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Post
-	withUser    *UserQuery
-	withReplies *PostQuery
-	withParent  *PostQuery
-	withVotes   *VoteQuery
-	withFKs     bool
+	ctx           *QueryContext
+	order         []post.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Post
+	withUser      *UserQuery
+	withCommunity *CommunityQuery
+	withReplies   *PostQuery
+	withParent    *PostQuery
+	withVotes     *VoteQuery
+	withFKs       bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -82,6 +84,28 @@ func (pq *PostQuery) QueryUser() *UserQuery {
 			sqlgraph.From(post.Table, post.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, post.UserTable, post.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCommunity chains the current query on the "community" edge.
+func (pq *PostQuery) QueryCommunity() *CommunityQuery {
+	query := (&CommunityClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(community.Table, community.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, post.CommunityTable, post.CommunityColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -342,15 +366,16 @@ func (pq *PostQuery) Clone() *PostQuery {
 		return nil
 	}
 	return &PostQuery{
-		config:      pq.config,
-		ctx:         pq.ctx.Clone(),
-		order:       append([]post.OrderOption{}, pq.order...),
-		inters:      append([]Interceptor{}, pq.inters...),
-		predicates:  append([]predicate.Post{}, pq.predicates...),
-		withUser:    pq.withUser.Clone(),
-		withReplies: pq.withReplies.Clone(),
-		withParent:  pq.withParent.Clone(),
-		withVotes:   pq.withVotes.Clone(),
+		config:        pq.config,
+		ctx:           pq.ctx.Clone(),
+		order:         append([]post.OrderOption{}, pq.order...),
+		inters:        append([]Interceptor{}, pq.inters...),
+		predicates:    append([]predicate.Post{}, pq.predicates...),
+		withUser:      pq.withUser.Clone(),
+		withCommunity: pq.withCommunity.Clone(),
+		withReplies:   pq.withReplies.Clone(),
+		withParent:    pq.withParent.Clone(),
+		withVotes:     pq.withVotes.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -365,6 +390,17 @@ func (pq *PostQuery) WithUser(opts ...func(*UserQuery)) *PostQuery {
 		opt(query)
 	}
 	pq.withUser = query
+	return pq
+}
+
+// WithCommunity tells the query-builder to eager-load the nodes that are connected to
+// the "community" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PostQuery) WithCommunity(opts ...func(*CommunityQuery)) *PostQuery {
+	query := (&CommunityClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withCommunity = query
 	return pq
 }
 
@@ -480,14 +516,15 @@ func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 		nodes       = []*Post{}
 		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			pq.withUser != nil,
+			pq.withCommunity != nil,
 			pq.withReplies != nil,
 			pq.withParent != nil,
 			pq.withVotes != nil,
 		}
 	)
-	if pq.withUser != nil {
+	if pq.withUser != nil || pq.withCommunity != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -514,6 +551,12 @@ func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 	if query := pq.withUser; query != nil {
 		if err := pq.loadUser(ctx, query, nodes, nil,
 			func(n *Post, e *User) { n.Edges.User = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withCommunity; query != nil {
+		if err := pq.loadCommunity(ctx, query, nodes, nil,
+			func(n *Post, e *Community) { n.Edges.Community = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -565,6 +608,38 @@ func (pq *PostQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Po
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "post_user" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (pq *PostQuery) loadCommunity(ctx context.Context, query *CommunityQuery, nodes []*Post, init func(*Post), assign func(*Post, *Community)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Post)
+	for i := range nodes {
+		if nodes[i].post_community == nil {
+			continue
+		}
+		fk := *nodes[i].post_community
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(community.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "post_community" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

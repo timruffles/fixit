@@ -27,10 +27,12 @@ var (
 	PostColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "title", Type: field.TypeString, Size: 128},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"issue", "solution", "verification"}, Default: "issue"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "tags", Type: field.TypeJSON, Nullable: true},
-		{Name: "post_user", Type: field.TypeUUID, Nullable: true},
+		{Name: "post_user", Type: field.TypeUUID},
+		{Name: "post_community", Type: field.TypeUUID},
 		{Name: "reply_to", Type: field.TypeUUID, Nullable: true},
 	}
 	// PostTable holds the schema information for the "post" table.
@@ -41,13 +43,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "post_user_user",
-				Columns:    []*schema.Column{PostColumns[5]},
+				Columns:    []*schema.Column{PostColumns[6]},
 				RefColumns: []*schema.Column{UserColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "post_community_community",
+				Columns:    []*schema.Column{PostColumns[7]},
+				RefColumns: []*schema.Column{CommunityColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "post_post_parent",
-				Columns:    []*schema.Column{PostColumns[6]},
+				Columns:    []*schema.Column{PostColumns[8]},
 				RefColumns: []*schema.Column{PostColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -71,7 +79,7 @@ var (
 	// VoteColumns holds the columns for the "vote" table.
 	VoteColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "kind", Type: field.TypeString},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"interesting", "truthful"}},
 		{Name: "value", Type: field.TypeInt},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -124,7 +132,8 @@ func init() {
 		Table: "community",
 	}
 	PostTable.ForeignKeys[0].RefTable = UserTable
-	PostTable.ForeignKeys[1].RefTable = PostTable
+	PostTable.ForeignKeys[1].RefTable = CommunityTable
+	PostTable.ForeignKeys[2].RefTable = PostTable
 	PostTable.Annotation = &entsql.Annotation{
 		Table: "post",
 	}

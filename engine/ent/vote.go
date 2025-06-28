@@ -21,7 +21,7 @@ type Vote struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// Kind holds the value of the "kind" field.
-	Kind string `json:"kind,omitempty"`
+	Kind vote.Kind `json:"kind,omitempty"`
 	// Value holds the value of the "value" field.
 	Value int `json:"value,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -111,7 +111,7 @@ func (v *Vote) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field kind", values[i])
 			} else if value.Valid {
-				v.Kind = value.String
+				v.Kind = vote.Kind(value.String)
 			}
 		case vote.FieldValue:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -192,7 +192,7 @@ func (v *Vote) String() string {
 	builder.WriteString("Vote(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", v.ID))
 	builder.WriteString("kind=")
-	builder.WriteString(v.Kind)
+	builder.WriteString(fmt.Sprintf("%v", v.Kind))
 	builder.WriteString(", ")
 	builder.WriteString("value=")
 	builder.WriteString(fmt.Sprintf("%v", v.Value))

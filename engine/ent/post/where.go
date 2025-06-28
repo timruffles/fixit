@@ -141,6 +141,26 @@ func TitleContainsFold(v string) predicate.Post {
 	return predicate.Post(sql.FieldContainsFold(FieldTitle, v))
 }
 
+// RoleEQ applies the EQ predicate on the "role" field.
+func RoleEQ(v Role) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldRole, v))
+}
+
+// RoleNEQ applies the NEQ predicate on the "role" field.
+func RoleNEQ(v Role) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldRole, v))
+}
+
+// RoleIn applies the In predicate on the "role" field.
+func RoleIn(vs ...Role) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldRole, vs...))
+}
+
+// RoleNotIn applies the NotIn predicate on the "role" field.
+func RoleNotIn(vs ...Role) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldRole, vs...))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldCreatedAt, v))
@@ -276,6 +296,29 @@ func HasUser() predicate.Post {
 func HasUserWith(preds ...predicate.User) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
 		step := newUserStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCommunity applies the HasEdge predicate on the "community" edge.
+func HasCommunity() predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, CommunityTable, CommunityColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommunityWith applies the HasEdge predicate on the "community" edge with a given conditions (other predicates).
+func HasCommunityWith(preds ...predicate.Community) predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := newCommunityStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

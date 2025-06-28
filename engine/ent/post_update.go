@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"errors"
+	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/predicate"
 	"fixit/engine/ent/user"
@@ -42,6 +43,20 @@ func (pu *PostUpdate) SetTitle(s string) *PostUpdate {
 func (pu *PostUpdate) SetNillableTitle(s *string) *PostUpdate {
 	if s != nil {
 		pu.SetTitle(*s)
+	}
+	return pu
+}
+
+// SetRole sets the "role" field.
+func (pu *PostUpdate) SetRole(po post.Role) *PostUpdate {
+	pu.mutation.SetRole(po)
+	return pu
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableRole(po *post.Role) *PostUpdate {
+	if po != nil {
+		pu.SetRole(*po)
 	}
 	return pu
 }
@@ -96,17 +111,20 @@ func (pu *PostUpdate) SetUserID(id uuid.UUID) *PostUpdate {
 	return pu
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (pu *PostUpdate) SetNillableUserID(id *uuid.UUID) *PostUpdate {
-	if id != nil {
-		pu = pu.SetUserID(*id)
-	}
-	return pu
-}
-
 // SetUser sets the "user" edge to the User entity.
 func (pu *PostUpdate) SetUser(u *User) *PostUpdate {
 	return pu.SetUserID(u.ID)
+}
+
+// SetCommunityID sets the "community" edge to the Community entity by ID.
+func (pu *PostUpdate) SetCommunityID(id uuid.UUID) *PostUpdate {
+	pu.mutation.SetCommunityID(id)
+	return pu
+}
+
+// SetCommunity sets the "community" edge to the Community entity.
+func (pu *PostUpdate) SetCommunity(c *Community) *PostUpdate {
+	return pu.SetCommunityID(c.ID)
 }
 
 // AddReplyIDs adds the "replies" edge to the Post entity by IDs.
@@ -166,6 +184,12 @@ func (pu *PostUpdate) Mutation() *PostMutation {
 // ClearUser clears the "user" edge to the User entity.
 func (pu *PostUpdate) ClearUser() *PostUpdate {
 	pu.mutation.ClearUser()
+	return pu
+}
+
+// ClearCommunity clears the "community" edge to the Community entity.
+func (pu *PostUpdate) ClearCommunity() *PostUpdate {
+	pu.mutation.ClearCommunity()
 	return pu
 }
 
@@ -260,6 +284,17 @@ func (pu *PostUpdate) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
+	if v, ok := pu.mutation.Role(); ok {
+		if err := post.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Post.role": %w`, err)}
+		}
+	}
+	if pu.mutation.UserCleared() && len(pu.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Post.user"`)
+	}
+	if pu.mutation.CommunityCleared() && len(pu.mutation.CommunityIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Post.community"`)
+	}
 	return nil
 }
 
@@ -277,6 +312,9 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.Role(); ok {
+		_spec.SetField(post.FieldRole, field.TypeEnum, value)
 	}
 	if value, ok := pu.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
@@ -314,6 +352,35 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.CommunityCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.CommunityTable,
+			Columns: []string{post.CommunityColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(community.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.CommunityIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.CommunityTable,
+			Columns: []string{post.CommunityColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(community.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -474,6 +541,20 @@ func (puo *PostUpdateOne) SetNillableTitle(s *string) *PostUpdateOne {
 	return puo
 }
 
+// SetRole sets the "role" field.
+func (puo *PostUpdateOne) SetRole(po post.Role) *PostUpdateOne {
+	puo.mutation.SetRole(po)
+	return puo
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableRole(po *post.Role) *PostUpdateOne {
+	if po != nil {
+		puo.SetRole(*po)
+	}
+	return puo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (puo *PostUpdateOne) SetUpdatedAt(t time.Time) *PostUpdateOne {
 	puo.mutation.SetUpdatedAt(t)
@@ -524,17 +605,20 @@ func (puo *PostUpdateOne) SetUserID(id uuid.UUID) *PostUpdateOne {
 	return puo
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (puo *PostUpdateOne) SetNillableUserID(id *uuid.UUID) *PostUpdateOne {
-	if id != nil {
-		puo = puo.SetUserID(*id)
-	}
-	return puo
-}
-
 // SetUser sets the "user" edge to the User entity.
 func (puo *PostUpdateOne) SetUser(u *User) *PostUpdateOne {
 	return puo.SetUserID(u.ID)
+}
+
+// SetCommunityID sets the "community" edge to the Community entity by ID.
+func (puo *PostUpdateOne) SetCommunityID(id uuid.UUID) *PostUpdateOne {
+	puo.mutation.SetCommunityID(id)
+	return puo
+}
+
+// SetCommunity sets the "community" edge to the Community entity.
+func (puo *PostUpdateOne) SetCommunity(c *Community) *PostUpdateOne {
+	return puo.SetCommunityID(c.ID)
 }
 
 // AddReplyIDs adds the "replies" edge to the Post entity by IDs.
@@ -594,6 +678,12 @@ func (puo *PostUpdateOne) Mutation() *PostMutation {
 // ClearUser clears the "user" edge to the User entity.
 func (puo *PostUpdateOne) ClearUser() *PostUpdateOne {
 	puo.mutation.ClearUser()
+	return puo
+}
+
+// ClearCommunity clears the "community" edge to the Community entity.
+func (puo *PostUpdateOne) ClearCommunity() *PostUpdateOne {
+	puo.mutation.ClearCommunity()
 	return puo
 }
 
@@ -701,6 +791,17 @@ func (puo *PostUpdateOne) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
+	if v, ok := puo.mutation.Role(); ok {
+		if err := post.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Post.role": %w`, err)}
+		}
+	}
+	if puo.mutation.UserCleared() && len(puo.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Post.user"`)
+	}
+	if puo.mutation.CommunityCleared() && len(puo.mutation.CommunityIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Post.community"`)
+	}
 	return nil
 }
 
@@ -735,6 +836,9 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	}
 	if value, ok := puo.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Role(); ok {
+		_spec.SetField(post.FieldRole, field.TypeEnum, value)
 	}
 	if value, ok := puo.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
@@ -772,6 +876,35 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.CommunityCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.CommunityTable,
+			Columns: []string{post.CommunityColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(community.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.CommunityIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.CommunityTable,
+			Columns: []string{post.CommunityColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(community.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

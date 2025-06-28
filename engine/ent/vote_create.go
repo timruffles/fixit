@@ -24,8 +24,8 @@ type VoteCreate struct {
 }
 
 // SetKind sets the "kind" field.
-func (vc *VoteCreate) SetKind(s string) *VoteCreate {
-	vc.mutation.SetKind(s)
+func (vc *VoteCreate) SetKind(v vote.Kind) *VoteCreate {
+	vc.mutation.SetKind(v)
 	return vc
 }
 
@@ -153,6 +153,11 @@ func (vc *VoteCreate) check() error {
 	if _, ok := vc.mutation.Kind(); !ok {
 		return &ValidationError{Name: "kind", err: errors.New(`ent: missing required field "Vote.kind"`)}
 	}
+	if v, ok := vc.mutation.Kind(); ok {
+		if err := vote.KindValidator(v); err != nil {
+			return &ValidationError{Name: "kind", err: fmt.Errorf(`ent: validator failed for field "Vote.kind": %w`, err)}
+		}
+	}
 	if _, ok := vc.mutation.Value(); !ok {
 		return &ValidationError{Name: "value", err: errors.New(`ent: missing required field "Vote.value"`)}
 	}
@@ -204,7 +209,7 @@ func (vc *VoteCreate) createSpec() (*Vote, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = &id
 	}
 	if value, ok := vc.mutation.Kind(); ok {
-		_spec.SetField(vote.FieldKind, field.TypeString, value)
+		_spec.SetField(vote.FieldKind, field.TypeEnum, value)
 		_node.Kind = value
 	}
 	if value, ok := vc.mutation.Value(); ok {

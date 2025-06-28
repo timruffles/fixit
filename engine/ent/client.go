@@ -486,6 +486,22 @@ func (c *PostClient) QueryUser(po *Post) *UserQuery {
 	return query
 }
 
+// QueryCommunity queries the community edge of a Post.
+func (c *PostClient) QueryCommunity(po *Post) *CommunityQuery {
+	query := (&CommunityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, id),
+			sqlgraph.To(community.Table, community.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, post.CommunityTable, post.CommunityColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryReplies queries the replies edge of a Post.
 func (c *PostClient) QueryReplies(po *Post) *PostQuery {
 	query := (&PostClient{config: c.config}).Query()

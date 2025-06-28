@@ -4,6 +4,7 @@ package ent
 
 import (
 	"encoding/json"
+	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/user"
 	"fmt"
@@ -22,6 +23,8 @@ type Post struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty"`
+	// Role holds the value of the "role" field.
+	Role post.Role `json:"role,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -32,15 +35,18 @@ type Post struct {
 	ReplyTo uuid.UUID `json:"reply_to,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PostQuery when eager-loading is set.
-	Edges        PostEdges `json:"edges"`
-	post_user    *uuid.UUID
-	selectValues sql.SelectValues
+	Edges          PostEdges `json:"edges"`
+	post_user      *uuid.UUID
+	post_community *uuid.UUID
+	selectValues   sql.SelectValues
 }
 
 // PostEdges holds the relations/edges for other nodes in the graph.
 type PostEdges struct {
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
+	// Community holds the value of the community edge.
+	Community *Community `json:"community,omitempty"`
 	// Replies holds the value of the replies edge.
 	Replies []*Post `json:"replies,omitempty"`
 	// Parent holds the value of the parent edge.
@@ -49,7 +55,7 @@ type PostEdges struct {
 	Votes []*Vote `json:"votes,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -63,10 +69,21 @@ func (e PostEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
+// CommunityOrErr returns the Community value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PostEdges) CommunityOrErr() (*Community, error) {
+	if e.Community != nil {
+		return e.Community, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: community.Label}
+	}
+	return nil, &NotLoadedError{edge: "community"}
+}
+
 // RepliesOrErr returns the Replies value or an error if the edge
 // was not loaded in eager-loading.
 func (e PostEdges) RepliesOrErr() ([]*Post, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Replies, nil
 	}
 	return nil, &NotLoadedError{edge: "replies"}
@@ -77,7 +94,7 @@ func (e PostEdges) RepliesOrErr() ([]*Post, error) {
 func (e PostEdges) ParentOrErr() (*Post, error) {
 	if e.Parent != nil {
 		return e.Parent, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: post.Label}
 	}
 	return nil, &NotLoadedError{edge: "parent"}
@@ -86,7 +103,7 @@ func (e PostEdges) ParentOrErr() (*Post, error) {
 // VotesOrErr returns the Votes value or an error if the edge
 // was not loaded in eager-loading.
 func (e PostEdges) VotesOrErr() ([]*Vote, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Votes, nil
 	}
 	return nil, &NotLoadedError{edge: "votes"}
@@ -99,13 +116,15 @@ func (*Post) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case post.FieldTags:
 			values[i] = new([]byte)
-		case post.FieldTitle:
+		case post.FieldTitle, post.FieldRole:
 			values[i] = new(sql.NullString)
 		case post.FieldCreatedAt, post.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case post.FieldID, post.FieldReplyTo:
 			values[i] = new(uuid.UUID)
 		case post.ForeignKeys[0]: // post_user
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case post.ForeignKeys[1]: // post_community
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -133,6 +152,12 @@ func (po *Post) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
 				po.Title = value.String
+			}
+		case post.FieldRole:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field role", values[i])
+			} else if value.Valid {
+				po.Role = post.Role(value.String)
 			}
 		case post.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -167,6 +192,13 @@ func (po *Post) assignValues(columns []string, values []any) error {
 				po.post_user = new(uuid.UUID)
 				*po.post_user = *value.S.(*uuid.UUID)
 			}
+		case post.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field post_community", values[i])
+			} else if value.Valid {
+				po.post_community = new(uuid.UUID)
+				*po.post_community = *value.S.(*uuid.UUID)
+			}
 		default:
 			po.selectValues.Set(columns[i], values[i])
 		}
@@ -183,6 +215,11 @@ func (po *Post) Value(name string) (ent.Value, error) {
 // QueryUser queries the "user" edge of the Post entity.
 func (po *Post) QueryUser() *UserQuery {
 	return NewPostClient(po.config).QueryUser(po)
+}
+
+// QueryCommunity queries the "community" edge of the Post entity.
+func (po *Post) QueryCommunity() *CommunityQuery {
+	return NewPostClient(po.config).QueryCommunity(po)
 }
 
 // QueryReplies queries the "replies" edge of the Post entity.
@@ -225,6 +262,9 @@ func (po *Post) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", po.ID))
 	builder.WriteString("title=")
 	builder.WriteString(po.Title)
+	builder.WriteString(", ")
+	builder.WriteString("role=")
+	builder.WriteString(fmt.Sprintf("%v", po.Role))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(po.CreatedAt.Format(time.ANSIC))

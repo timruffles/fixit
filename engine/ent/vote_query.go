@@ -336,7 +336,7 @@ func (vq *VoteQuery) WithUser(opts ...func(*UserQuery)) *VoteQuery {
 // Example:
 //
 //	var v []struct {
-//		Kind string `json:"kind,omitempty"`
+//		Kind vote.Kind `json:"kind,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -359,7 +359,7 @@ func (vq *VoteQuery) GroupBy(field string, fields ...string) *VoteGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Kind string `json:"kind,omitempty"`
+//		Kind vote.Kind `json:"kind,omitempty"`
 //	}
 //
 //	client.Vote.Query().

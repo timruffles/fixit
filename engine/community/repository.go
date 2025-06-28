@@ -56,6 +56,14 @@ func (r *Repository) Seed(ctx context.Context) error {
 		return nil
 	}
 
+	comm, err := r.client.Community.Create().
+		SetName("swindon").
+		SetTitle("swindon").
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Create example users
 	users := []struct {
 		username string
@@ -96,6 +104,7 @@ func (r *Repository) Seed(ctx context.Context) error {
 		userIndex := i % len(createdUsers)
 		_, err := r.client.Post.Create().
 			SetTitle(title).
+			SetCommunityID(comm.ID).
 			SetUser(createdUsers[userIndex]).
 			Save(ctx)
 		if err != nil {

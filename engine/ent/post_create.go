@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"errors"
+	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/user"
 	"fixit/engine/ent/vote"
@@ -26,6 +27,20 @@ type PostCreate struct {
 // SetTitle sets the "title" field.
 func (pc *PostCreate) SetTitle(s string) *PostCreate {
 	pc.mutation.SetTitle(s)
+	return pc
+}
+
+// SetRole sets the "role" field.
+func (pc *PostCreate) SetRole(po post.Role) *PostCreate {
+	pc.mutation.SetRole(po)
+	return pc
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (pc *PostCreate) SetNillableRole(po *post.Role) *PostCreate {
+	if po != nil {
+		pc.SetRole(*po)
+	}
 	return pc
 }
 
@@ -97,17 +112,20 @@ func (pc *PostCreate) SetUserID(id uuid.UUID) *PostCreate {
 	return pc
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (pc *PostCreate) SetNillableUserID(id *uuid.UUID) *PostCreate {
-	if id != nil {
-		pc = pc.SetUserID(*id)
-	}
-	return pc
-}
-
 // SetUser sets the "user" edge to the User entity.
 func (pc *PostCreate) SetUser(u *User) *PostCreate {
 	return pc.SetUserID(u.ID)
+}
+
+// SetCommunityID sets the "community" edge to the Community entity by ID.
+func (pc *PostCreate) SetCommunityID(id uuid.UUID) *PostCreate {
+	pc.mutation.SetCommunityID(id)
+	return pc
+}
+
+// SetCommunity sets the "community" edge to the Community entity.
+func (pc *PostCreate) SetCommunity(c *Community) *PostCreate {
+	return pc.SetCommunityID(c.ID)
 }
 
 // AddReplyIDs adds the "replies" edge to the Post entity by IDs.
@@ -194,6 +212,10 @@ func (pc *PostCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (pc *PostCreate) defaults() {
+	if _, ok := pc.mutation.Role(); !ok {
+		v := post.DefaultRole
+		pc.mutation.SetRole(v)
+	}
 	if _, ok := pc.mutation.CreatedAt(); !ok {
 		v := post.DefaultCreatedAt()
 		pc.mutation.SetCreatedAt(v)
@@ -222,11 +244,25 @@ func (pc *PostCreate) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
+	if _, ok := pc.mutation.Role(); !ok {
+		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Post.role"`)}
+	}
+	if v, ok := pc.mutation.Role(); ok {
+		if err := post.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Post.role": %w`, err)}
+		}
+	}
 	if _, ok := pc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Post.created_at"`)}
 	}
 	if _, ok := pc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Post.updated_at"`)}
+	}
+	if len(pc.mutation.UserIDs()) == 0 {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Post.user"`)}
+	}
+	if len(pc.mutation.CommunityIDs()) == 0 {
+		return &ValidationError{Name: "community", err: errors.New(`ent: missing required edge "Post.community"`)}
 	}
 	return nil
 }
@@ -267,6 +303,10 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
 		_node.Title = value
 	}
+	if value, ok := pc.mutation.Role(); ok {
+		_spec.SetField(post.FieldRole, field.TypeEnum, value)
+		_node.Role = value
+	}
 	if value, ok := pc.mutation.CreatedAt(); ok {
 		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -294,6 +334,23 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.post_user = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.CommunityIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.CommunityTable,
+			Columns: []string{post.CommunityColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(community.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.post_community = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := pc.mutation.RepliesIDs(); len(nodes) > 0 {

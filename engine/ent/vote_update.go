@@ -32,15 +32,15 @@ func (vu *VoteUpdate) Where(ps ...predicate.Vote) *VoteUpdate {
 }
 
 // SetKind sets the "kind" field.
-func (vu *VoteUpdate) SetKind(s string) *VoteUpdate {
-	vu.mutation.SetKind(s)
+func (vu *VoteUpdate) SetKind(v vote.Kind) *VoteUpdate {
+	vu.mutation.SetKind(v)
 	return vu
 }
 
 // SetNillableKind sets the "kind" field if the given value is not nil.
-func (vu *VoteUpdate) SetNillableKind(s *string) *VoteUpdate {
-	if s != nil {
-		vu.SetKind(*s)
+func (vu *VoteUpdate) SetNillableKind(v *vote.Kind) *VoteUpdate {
+	if v != nil {
+		vu.SetKind(*v)
 	}
 	return vu
 }
@@ -149,6 +149,11 @@ func (vu *VoteUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (vu *VoteUpdate) check() error {
+	if v, ok := vu.mutation.Kind(); ok {
+		if err := vote.KindValidator(v); err != nil {
+			return &ValidationError{Name: "kind", err: fmt.Errorf(`ent: validator failed for field "Vote.kind": %w`, err)}
+		}
+	}
 	if vu.mutation.PostCleared() && len(vu.mutation.PostIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Vote.post"`)
 	}
@@ -171,7 +176,7 @@ func (vu *VoteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := vu.mutation.Kind(); ok {
-		_spec.SetField(vote.FieldKind, field.TypeString, value)
+		_spec.SetField(vote.FieldKind, field.TypeEnum, value)
 	}
 	if value, ok := vu.mutation.Value(); ok {
 		_spec.SetField(vote.FieldValue, field.TypeInt, value)
@@ -261,15 +266,15 @@ type VoteUpdateOne struct {
 }
 
 // SetKind sets the "kind" field.
-func (vuo *VoteUpdateOne) SetKind(s string) *VoteUpdateOne {
-	vuo.mutation.SetKind(s)
+func (vuo *VoteUpdateOne) SetKind(v vote.Kind) *VoteUpdateOne {
+	vuo.mutation.SetKind(v)
 	return vuo
 }
 
 // SetNillableKind sets the "kind" field if the given value is not nil.
-func (vuo *VoteUpdateOne) SetNillableKind(s *string) *VoteUpdateOne {
-	if s != nil {
-		vuo.SetKind(*s)
+func (vuo *VoteUpdateOne) SetNillableKind(v *vote.Kind) *VoteUpdateOne {
+	if v != nil {
+		vuo.SetKind(*v)
 	}
 	return vuo
 }
@@ -391,6 +396,11 @@ func (vuo *VoteUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (vuo *VoteUpdateOne) check() error {
+	if v, ok := vuo.mutation.Kind(); ok {
+		if err := vote.KindValidator(v); err != nil {
+			return &ValidationError{Name: "kind", err: fmt.Errorf(`ent: validator failed for field "Vote.kind": %w`, err)}
+		}
+	}
 	if vuo.mutation.PostCleared() && len(vuo.mutation.PostIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Vote.post"`)
 	}
@@ -430,7 +440,7 @@ func (vuo *VoteUpdateOne) sqlSave(ctx context.Context) (_node *Vote, err error) 
 		}
 	}
 	if value, ok := vuo.mutation.Kind(); ok {
-		_spec.SetField(vote.FieldKind, field.TypeString, value)
+		_spec.SetField(vote.FieldKind, field.TypeEnum, value)
 	}
 	if value, ok := vuo.mutation.Value(); ok {
 		_spec.SetField(vote.FieldValue, field.TypeInt, value)

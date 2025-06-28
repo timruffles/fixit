@@ -531,28 +531,31 @@ func (m *CommunityMutation) ResetEdge(name string) error {
 // PostMutation represents an operation that mutates the Post nodes in the graph.
 type PostMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *uuid.UUID
-	title          *string
-	created_at     *time.Time
-	updated_at     *time.Time
-	tags           *[]string
-	appendtags     []string
-	clearedFields  map[string]struct{}
-	user           *uuid.UUID
-	cleareduser    bool
-	replies        map[uuid.UUID]struct{}
-	removedreplies map[uuid.UUID]struct{}
-	clearedreplies bool
-	parent         *uuid.UUID
-	clearedparent  bool
-	votes          map[uuid.UUID]struct{}
-	removedvotes   map[uuid.UUID]struct{}
-	clearedvotes   bool
-	done           bool
-	oldValue       func(context.Context) (*Post, error)
-	predicates     []predicate.Post
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	title            *string
+	role             *post.Role
+	created_at       *time.Time
+	updated_at       *time.Time
+	tags             *[]string
+	appendtags       []string
+	clearedFields    map[string]struct{}
+	user             *uuid.UUID
+	cleareduser      bool
+	community        *uuid.UUID
+	clearedcommunity bool
+	replies          map[uuid.UUID]struct{}
+	removedreplies   map[uuid.UUID]struct{}
+	clearedreplies   bool
+	parent           *uuid.UUID
+	clearedparent    bool
+	votes            map[uuid.UUID]struct{}
+	removedvotes     map[uuid.UUID]struct{}
+	clearedvotes     bool
+	done             bool
+	oldValue         func(context.Context) (*Post, error)
+	predicates       []predicate.Post
 }
 
 var _ ent.Mutation = (*PostMutation)(nil)
@@ -693,6 +696,42 @@ func (m *PostMutation) OldTitle(ctx context.Context) (v string, err error) {
 // ResetTitle resets all changes to the "title" field.
 func (m *PostMutation) ResetTitle() {
 	m.title = nil
+}
+
+// SetRole sets the "role" field.
+func (m *PostMutation) SetRole(po post.Role) {
+	m.role = &po
+}
+
+// Role returns the value of the "role" field in the mutation.
+func (m *PostMutation) Role() (r post.Role, exists bool) {
+	v := m.role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRole returns the old "role" field's value of the Post entity.
+// If the Post object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PostMutation) OldRole(ctx context.Context) (v post.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRole: %w", err)
+	}
+	return oldValue.Role, nil
+}
+
+// ResetRole resets all changes to the "role" field.
+func (m *PostMutation) ResetRole() {
+	m.role = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -920,6 +959,45 @@ func (m *PostMutation) ResetUser() {
 	m.cleareduser = false
 }
 
+// SetCommunityID sets the "community" edge to the Community entity by id.
+func (m *PostMutation) SetCommunityID(id uuid.UUID) {
+	m.community = &id
+}
+
+// ClearCommunity clears the "community" edge to the Community entity.
+func (m *PostMutation) ClearCommunity() {
+	m.clearedcommunity = true
+}
+
+// CommunityCleared reports if the "community" edge to the Community entity was cleared.
+func (m *PostMutation) CommunityCleared() bool {
+	return m.clearedcommunity
+}
+
+// CommunityID returns the "community" edge ID in the mutation.
+func (m *PostMutation) CommunityID() (id uuid.UUID, exists bool) {
+	if m.community != nil {
+		return *m.community, true
+	}
+	return
+}
+
+// CommunityIDs returns the "community" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CommunityID instead. It exists only for internal usage by the builders.
+func (m *PostMutation) CommunityIDs() (ids []uuid.UUID) {
+	if id := m.community; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCommunity resets all changes to the "community" edge.
+func (m *PostMutation) ResetCommunity() {
+	m.community = nil
+	m.clearedcommunity = false
+}
+
 // AddReplyIDs adds the "replies" edge to the Post entity by ids.
 func (m *PostMutation) AddReplyIDs(ids ...uuid.UUID) {
 	if m.replies == nil {
@@ -1102,9 +1180,12 @@ func (m *PostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PostMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.title != nil {
 		fields = append(fields, post.FieldTitle)
+	}
+	if m.role != nil {
+		fields = append(fields, post.FieldRole)
 	}
 	if m.created_at != nil {
 		fields = append(fields, post.FieldCreatedAt)
@@ -1128,6 +1209,8 @@ func (m *PostMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case post.FieldTitle:
 		return m.Title()
+	case post.FieldRole:
+		return m.Role()
 	case post.FieldCreatedAt:
 		return m.CreatedAt()
 	case post.FieldUpdatedAt:
@@ -1147,6 +1230,8 @@ func (m *PostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 	switch name {
 	case post.FieldTitle:
 		return m.OldTitle(ctx)
+	case post.FieldRole:
+		return m.OldRole(ctx)
 	case post.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case post.FieldUpdatedAt:
@@ -1170,6 +1255,13 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTitle(v)
+		return nil
+	case post.FieldRole:
+		v, ok := value.(post.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRole(v)
 		return nil
 	case post.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1266,6 +1358,9 @@ func (m *PostMutation) ResetField(name string) error {
 	case post.FieldTitle:
 		m.ResetTitle()
 		return nil
+	case post.FieldRole:
+		m.ResetRole()
+		return nil
 	case post.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -1284,9 +1379,12 @@ func (m *PostMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PostMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.user != nil {
 		edges = append(edges, post.EdgeUser)
+	}
+	if m.community != nil {
+		edges = append(edges, post.EdgeCommunity)
 	}
 	if m.replies != nil {
 		edges = append(edges, post.EdgeReplies)
@@ -1306,6 +1404,10 @@ func (m *PostMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case post.EdgeUser:
 		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case post.EdgeCommunity:
+		if id := m.community; id != nil {
 			return []ent.Value{*id}
 		}
 	case post.EdgeReplies:
@@ -1330,7 +1432,7 @@ func (m *PostMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PostMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedreplies != nil {
 		edges = append(edges, post.EdgeReplies)
 	}
@@ -1362,9 +1464,12 @@ func (m *PostMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PostMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.cleareduser {
 		edges = append(edges, post.EdgeUser)
+	}
+	if m.clearedcommunity {
+		edges = append(edges, post.EdgeCommunity)
 	}
 	if m.clearedreplies {
 		edges = append(edges, post.EdgeReplies)
@@ -1384,6 +1489,8 @@ func (m *PostMutation) EdgeCleared(name string) bool {
 	switch name {
 	case post.EdgeUser:
 		return m.cleareduser
+	case post.EdgeCommunity:
+		return m.clearedcommunity
 	case post.EdgeReplies:
 		return m.clearedreplies
 	case post.EdgeParent:
@@ -1401,6 +1508,9 @@ func (m *PostMutation) ClearEdge(name string) error {
 	case post.EdgeUser:
 		m.ClearUser()
 		return nil
+	case post.EdgeCommunity:
+		m.ClearCommunity()
+		return nil
 	case post.EdgeParent:
 		m.ClearParent()
 		return nil
@@ -1414,6 +1524,9 @@ func (m *PostMutation) ResetEdge(name string) error {
 	switch name {
 	case post.EdgeUser:
 		m.ResetUser()
+		return nil
+	case post.EdgeCommunity:
+		m.ResetCommunity()
 		return nil
 	case post.EdgeReplies:
 		m.ResetReplies()
@@ -2158,7 +2271,7 @@ type VoteMutation struct {
 	op            Op
 	typ           string
 	id            *uuid.UUID
-	kind          *string
+	kind          *vote.Kind
 	value         *int
 	addvalue      *int
 	created_at    *time.Time
@@ -2278,12 +2391,12 @@ func (m *VoteMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 }
 
 // SetKind sets the "kind" field.
-func (m *VoteMutation) SetKind(s string) {
-	m.kind = &s
+func (m *VoteMutation) SetKind(v vote.Kind) {
+	m.kind = &v
 }
 
 // Kind returns the value of the "kind" field in the mutation.
-func (m *VoteMutation) Kind() (r string, exists bool) {
+func (m *VoteMutation) Kind() (r vote.Kind, exists bool) {
 	v := m.kind
 	if v == nil {
 		return
@@ -2294,7 +2407,7 @@ func (m *VoteMutation) Kind() (r string, exists bool) {
 // OldKind returns the old "kind" field's value of the Vote entity.
 // If the Vote object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VoteMutation) OldKind(ctx context.Context) (v string, err error) {
+func (m *VoteMutation) OldKind(ctx context.Context) (v vote.Kind, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldKind is only allowed on UpdateOne operations")
 	}
@@ -2609,7 +2722,7 @@ func (m *VoteMutation) OldField(ctx context.Context, name string) (ent.Value, er
 func (m *VoteMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case vote.FieldKind:
-		v, ok := value.(string)
+		v, ok := value.(vote.Kind)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
