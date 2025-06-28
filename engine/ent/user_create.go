@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/user"
+	"fixit/engine/ent/vote"
 	"fmt"
 	"time"
 
@@ -95,6 +96,21 @@ func (uc *UserCreate) AddPosts(p ...*Post) *UserCreate {
 		ids[i] = p[i].ID
 	}
 	return uc.AddPostIDs(ids...)
+}
+
+// AddVoteIDs adds the "votes" edge to the Vote entity by IDs.
+func (uc *UserCreate) AddVoteIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddVoteIDs(ids...)
+	return uc
+}
+
+// AddVotes adds the "votes" edges to the Vote entity.
+func (uc *UserCreate) AddVotes(v ...*Vote) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return uc.AddVoteIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -231,12 +247,28 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if nodes := uc.mutation.PostsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   user.PostsTable,
 			Columns: []string{user.PostsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.VotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VotesTable,
+			Columns: []string{user.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

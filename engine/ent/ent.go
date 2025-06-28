@@ -8,6 +8,7 @@ import (
 	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/user"
+	"fixit/engine/ent/vote"
 	"fmt"
 	"reflect"
 	"sync"
@@ -78,6 +79,7 @@ func checkColumn(table, column string) error {
 			community.Table: community.ValidColumn,
 			post.Table:      post.ValidColumn,
 			user.Table:      user.ValidColumn,
+			vote.Table:      vote.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

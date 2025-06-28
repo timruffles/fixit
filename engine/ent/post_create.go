@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/user"
+	"fixit/engine/ent/vote"
 	"fmt"
 	"time"
 
@@ -56,6 +57,26 @@ func (pc *PostCreate) SetNillableUpdatedAt(t *time.Time) *PostCreate {
 	return pc
 }
 
+// SetTags sets the "tags" field.
+func (pc *PostCreate) SetTags(s []string) *PostCreate {
+	pc.mutation.SetTags(s)
+	return pc
+}
+
+// SetReplyTo sets the "reply_to" field.
+func (pc *PostCreate) SetReplyTo(u uuid.UUID) *PostCreate {
+	pc.mutation.SetReplyTo(u)
+	return pc
+}
+
+// SetNillableReplyTo sets the "reply_to" field if the given value is not nil.
+func (pc *PostCreate) SetNillableReplyTo(u *uuid.UUID) *PostCreate {
+	if u != nil {
+		pc.SetReplyTo(*u)
+	}
+	return pc
+}
+
 // SetID sets the "id" field.
 func (pc *PostCreate) SetID(u uuid.UUID) *PostCreate {
 	pc.mutation.SetID(u)
@@ -76,9 +97,66 @@ func (pc *PostCreate) SetUserID(id uuid.UUID) *PostCreate {
 	return pc
 }
 
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (pc *PostCreate) SetNillableUserID(id *uuid.UUID) *PostCreate {
+	if id != nil {
+		pc = pc.SetUserID(*id)
+	}
+	return pc
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (pc *PostCreate) SetUser(u *User) *PostCreate {
 	return pc.SetUserID(u.ID)
+}
+
+// AddReplyIDs adds the "replies" edge to the Post entity by IDs.
+func (pc *PostCreate) AddReplyIDs(ids ...uuid.UUID) *PostCreate {
+	pc.mutation.AddReplyIDs(ids...)
+	return pc
+}
+
+// AddReplies adds the "replies" edges to the Post entity.
+func (pc *PostCreate) AddReplies(p ...*Post) *PostCreate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return pc.AddReplyIDs(ids...)
+}
+
+// SetParentID sets the "parent" edge to the Post entity by ID.
+func (pc *PostCreate) SetParentID(id uuid.UUID) *PostCreate {
+	pc.mutation.SetParentID(id)
+	return pc
+}
+
+// SetNillableParentID sets the "parent" edge to the Post entity by ID if the given value is not nil.
+func (pc *PostCreate) SetNillableParentID(id *uuid.UUID) *PostCreate {
+	if id != nil {
+		pc = pc.SetParentID(*id)
+	}
+	return pc
+}
+
+// SetParent sets the "parent" edge to the Post entity.
+func (pc *PostCreate) SetParent(p *Post) *PostCreate {
+	return pc.SetParentID(p.ID)
+}
+
+// AddVoteIDs adds the "votes" edge to the Vote entity by IDs.
+func (pc *PostCreate) AddVoteIDs(ids ...uuid.UUID) *PostCreate {
+	pc.mutation.AddVoteIDs(ids...)
+	return pc
+}
+
+// AddVotes adds the "votes" edges to the Vote entity.
+func (pc *PostCreate) AddVotes(v ...*Vote) *PostCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return pc.AddVoteIDs(ids...)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -124,6 +202,10 @@ func (pc *PostCreate) defaults() {
 		v := post.DefaultUpdatedAt()
 		pc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := pc.mutation.Tags(); !ok {
+		v := post.DefaultTags
+		pc.mutation.SetTags(v)
+	}
 	if _, ok := pc.mutation.ID(); !ok {
 		v := post.DefaultID()
 		pc.mutation.SetID(v)
@@ -145,9 +227,6 @@ func (pc *PostCreate) check() error {
 	}
 	if _, ok := pc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Post.updated_at"`)}
-	}
-	if len(pc.mutation.UserIDs()) == 0 {
-		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Post.user"`)}
 	}
 	return nil
 }
@@ -196,10 +275,14 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := pc.mutation.Tags(); ok {
+		_spec.SetField(post.FieldTags, field.TypeJSON, value)
+		_node.Tags = value
+	}
 	if nodes := pc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   post.UserTable,
 			Columns: []string{post.UserColumn},
 			Bidi:    false,
@@ -210,7 +293,56 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_posts = &nodes[0]
+		_node.post_user = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.RepliesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.ParentTable,
+			Columns: []string{post.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ReplyTo = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.VotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

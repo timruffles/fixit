@@ -38,7 +38,7 @@ func setup() {
 		panic(fmt.Sprintf("Failed to create test app: %v", err))
 	}
 
-	if err := testApp.InitForTesting(); err != nil {
+	if err := testApp.Initialize(); err != nil {
 		panic(fmt.Sprintf("Failed to init test app: %v", err))
 	}
 

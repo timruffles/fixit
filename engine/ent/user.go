@@ -38,9 +38,11 @@ type User struct {
 type UserEdges struct {
 	// Posts holds the value of the posts edge.
 	Posts []*Post `json:"posts,omitempty"`
+	// Votes holds the value of the votes edge.
+	Votes []*Vote `json:"votes,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // PostsOrErr returns the Posts value or an error if the edge
@@ -50,6 +52,15 @@ func (e UserEdges) PostsOrErr() ([]*Post, error) {
 		return e.Posts, nil
 	}
 	return nil, &NotLoadedError{edge: "posts"}
+}
+
+// VotesOrErr returns the Votes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) VotesOrErr() ([]*Vote, error) {
+	if e.loadedTypes[1] {
+		return e.Votes, nil
+	}
+	return nil, &NotLoadedError{edge: "votes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -130,6 +141,11 @@ func (u *User) Value(name string) (ent.Value, error) {
 // QueryPosts queries the "posts" edge of the User entity.
 func (u *User) QueryPosts() *PostQuery {
 	return NewUserClient(u.config).QueryPosts(u)
+}
+
+// QueryVotes queries the "votes" edge of the User entity.
+func (u *User) QueryVotes() *VoteQuery {
+	return NewUserClient(u.config).QueryVotes(u)
 }
 
 // Update returns a builder for updating this User.

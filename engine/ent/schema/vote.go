@@ -51,7 +51,7 @@ func (Vote) Indexes() []ent.Index {
 
 func (Vote) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("post", Post.Type),
-		edge.To("user", User.Type),
+		edge.To("post", Post.Type).Unique().Required(),
+		edge.To("user", User.Type).Unique().Required(),
 	}
 }

@@ -29,7 +29,9 @@ var (
 		{Name: "title", Type: field.TypeString, Size: 128},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "user_posts", Type: field.TypeUUID},
+		{Name: "tags", Type: field.TypeJSON, Nullable: true},
+		{Name: "post_user", Type: field.TypeUUID, Nullable: true},
+		{Name: "reply_to", Type: field.TypeUUID, Nullable: true},
 	}
 	// PostTable holds the schema information for the "post" table.
 	PostTable = &schema.Table{
@@ -38,10 +40,16 @@ var (
 		PrimaryKey: []*schema.Column{PostColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "post_user_posts",
-				Columns:    []*schema.Column{PostColumns[4]},
+				Symbol:     "post_user_user",
+				Columns:    []*schema.Column{PostColumns[5]},
 				RefColumns: []*schema.Column{UserColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "post_post_parent",
+				Columns:    []*schema.Column{PostColumns[6]},
+				RefColumns: []*schema.Column{PostColumns[0]},
+				OnDelete:   schema.SetNull,
 			},
 		},
 	}
@@ -60,11 +68,54 @@ var (
 		Columns:    UserColumns,
 		PrimaryKey: []*schema.Column{UserColumns[0]},
 	}
+	// VoteColumns holds the columns for the "vote" table.
+	VoteColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "kind", Type: field.TypeString},
+		{Name: "value", Type: field.TypeInt},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "vote_post", Type: field.TypeUUID},
+		{Name: "vote_user", Type: field.TypeUUID},
+	}
+	// VoteTable holds the schema information for the "vote" table.
+	VoteTable = &schema.Table{
+		Name:       "vote",
+		Columns:    VoteColumns,
+		PrimaryKey: []*schema.Column{VoteColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "vote_post_post",
+				Columns:    []*schema.Column{VoteColumns[5]},
+				RefColumns: []*schema.Column{PostColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "vote_user_user",
+				Columns:    []*schema.Column{VoteColumns[6]},
+				RefColumns: []*schema.Column{UserColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "vote_kind",
+				Unique:  false,
+				Columns: []*schema.Column{VoteColumns[1]},
+			},
+			{
+				Name:    "vote_kind_vote_user",
+				Unique:  true,
+				Columns: []*schema.Column{VoteColumns[1], VoteColumns[6]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CommunityTable,
 		PostTable,
 		UserTable,
+		VoteTable,
 	}
 )
 
@@ -73,10 +124,16 @@ func init() {
 		Table: "community",
 	}
 	PostTable.ForeignKeys[0].RefTable = UserTable
+	PostTable.ForeignKeys[1].RefTable = PostTable
 	PostTable.Annotation = &entsql.Annotation{
 		Table: "post",
 	}
 	UserTable.Annotation = &entsql.Annotation{
 		Table: "user",
+	}
+	VoteTable.ForeignKeys[0].RefTable = PostTable
+	VoteTable.ForeignKeys[1].RefTable = UserTable
+	VoteTable.Annotation = &entsql.Annotation{
+		Table: "vote",
 	}
 }

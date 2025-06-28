@@ -51,13 +51,14 @@ func (Post) Fields() []ent.Field {
 func (Post) Edges() []ent.Edge {
 	return []ent.Edge{
 		// o2o
-		edge.To("user", User.Type),
+		edge.To("user", User.Type).Unique(),
 		edge.To("parent", Post.Type).
 			Field("reply_to").
 			Unique().
 			From("replies"),
 		// o2m
-		edge.From("votes", Vote.Type).Ref("user").Unique(),
-		edge.From("attachments", Attachment.Type).Ref("post").Unique(),
+		edge.From("votes", Vote.Type).Ref("post"),
+		// TODO - getting "entc/gen: type "Attachment" does not exist for edge", not required for now
+		//edge.From("attachments", Attachment.Type).Ref("post"),
 	}
 }

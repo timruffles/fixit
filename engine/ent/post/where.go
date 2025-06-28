@@ -71,6 +71,11 @@ func UpdatedAt(v time.Time) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// ReplyTo applies equality check predicate on the "reply_to" field. It's identical to ReplyToEQ.
+func ReplyTo(v uuid.UUID) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldReplyTo, v))
+}
+
 // TitleEQ applies the EQ predicate on the "title" field.
 func TitleEQ(v string) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldTitle, v))
@@ -216,12 +221,52 @@ func UpdatedAtLTE(v time.Time) predicate.Post {
 	return predicate.Post(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// TagsIsNil applies the IsNil predicate on the "tags" field.
+func TagsIsNil() predicate.Post {
+	return predicate.Post(sql.FieldIsNull(FieldTags))
+}
+
+// TagsNotNil applies the NotNil predicate on the "tags" field.
+func TagsNotNil() predicate.Post {
+	return predicate.Post(sql.FieldNotNull(FieldTags))
+}
+
+// ReplyToEQ applies the EQ predicate on the "reply_to" field.
+func ReplyToEQ(v uuid.UUID) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldReplyTo, v))
+}
+
+// ReplyToNEQ applies the NEQ predicate on the "reply_to" field.
+func ReplyToNEQ(v uuid.UUID) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldReplyTo, v))
+}
+
+// ReplyToIn applies the In predicate on the "reply_to" field.
+func ReplyToIn(vs ...uuid.UUID) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldReplyTo, vs...))
+}
+
+// ReplyToNotIn applies the NotIn predicate on the "reply_to" field.
+func ReplyToNotIn(vs ...uuid.UUID) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldReplyTo, vs...))
+}
+
+// ReplyToIsNil applies the IsNil predicate on the "reply_to" field.
+func ReplyToIsNil() predicate.Post {
+	return predicate.Post(sql.FieldIsNull(FieldReplyTo))
+}
+
+// ReplyToNotNil applies the NotNil predicate on the "reply_to" field.
+func ReplyToNotNil() predicate.Post {
+	return predicate.Post(sql.FieldNotNull(FieldReplyTo))
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -231,6 +276,75 @@ func HasUser() predicate.Post {
 func HasUserWith(preds ...predicate.User) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
 		step := newUserStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReplies applies the HasEdge predicate on the "replies" edge.
+func HasReplies() predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, RepliesTable, RepliesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRepliesWith applies the HasEdge predicate on the "replies" edge with a given conditions (other predicates).
+func HasRepliesWith(preds ...predicate.Post) predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := newRepliesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParent applies the HasEdge predicate on the "parent" edge.
+func HasParent() predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParentWith applies the HasEdge predicate on the "parent" edge with a given conditions (other predicates).
+func HasParentWith(preds ...predicate.Post) predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := newParentStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasVotes applies the HasEdge predicate on the "votes" edge.
+func HasVotes() predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, VotesTable, VotesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasVotesWith applies the HasEdge predicate on the "votes" edge with a given conditions (other predicates).
+func HasVotesWith(preds ...predicate.Vote) predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := newVotesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

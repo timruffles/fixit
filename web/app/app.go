@@ -33,21 +33,18 @@ func New(cfg Config) (*App, error) {
 	}, nil
 }
 
-func (a *App) InitForTesting() error {
+func (a *App) Initialize() error {
 	if err := a.server.InitDB(a.cfg.DatabaseURL); err != nil {
 		return err
 	}
 
-	// Setup auth
 	ab, err := auth.Setup(a.server.Client(), a.cfg.Auth)
 	if err != nil {
 		return err
 	}
 
-	// Add auth middleware
 	a.server.Router().Use(auth.Middleware(ab))
 
-	// Mount auth routes
 	a.server.Router().PathPrefix("/auth").Handler(http.StripPrefix("/auth", ab.Config.Core.Router))
 
 	repo := community.NewRepository(a.server.Client())
@@ -68,7 +65,7 @@ func (a *App) Router() http.Handler {
 }
 
 func (a *App) Start() error {
-	if err := a.InitForTesting(); err != nil {
+	if err := a.Initialize(); err != nil {
 		return err
 	}
 

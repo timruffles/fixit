@@ -8,11 +8,13 @@ import (
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/predicate"
 	"fixit/engine/ent/user"
+	"fixit/engine/ent/vote"
 	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 )
@@ -50,15 +52,110 @@ func (pu *PostUpdate) SetUpdatedAt(t time.Time) *PostUpdate {
 	return pu
 }
 
+// SetTags sets the "tags" field.
+func (pu *PostUpdate) SetTags(s []string) *PostUpdate {
+	pu.mutation.SetTags(s)
+	return pu
+}
+
+// AppendTags appends s to the "tags" field.
+func (pu *PostUpdate) AppendTags(s []string) *PostUpdate {
+	pu.mutation.AppendTags(s)
+	return pu
+}
+
+// ClearTags clears the value of the "tags" field.
+func (pu *PostUpdate) ClearTags() *PostUpdate {
+	pu.mutation.ClearTags()
+	return pu
+}
+
+// SetReplyTo sets the "reply_to" field.
+func (pu *PostUpdate) SetReplyTo(u uuid.UUID) *PostUpdate {
+	pu.mutation.SetReplyTo(u)
+	return pu
+}
+
+// SetNillableReplyTo sets the "reply_to" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableReplyTo(u *uuid.UUID) *PostUpdate {
+	if u != nil {
+		pu.SetReplyTo(*u)
+	}
+	return pu
+}
+
+// ClearReplyTo clears the value of the "reply_to" field.
+func (pu *PostUpdate) ClearReplyTo() *PostUpdate {
+	pu.mutation.ClearReplyTo()
+	return pu
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (pu *PostUpdate) SetUserID(id uuid.UUID) *PostUpdate {
 	pu.mutation.SetUserID(id)
 	return pu
 }
 
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (pu *PostUpdate) SetNillableUserID(id *uuid.UUID) *PostUpdate {
+	if id != nil {
+		pu = pu.SetUserID(*id)
+	}
+	return pu
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (pu *PostUpdate) SetUser(u *User) *PostUpdate {
 	return pu.SetUserID(u.ID)
+}
+
+// AddReplyIDs adds the "replies" edge to the Post entity by IDs.
+func (pu *PostUpdate) AddReplyIDs(ids ...uuid.UUID) *PostUpdate {
+	pu.mutation.AddReplyIDs(ids...)
+	return pu
+}
+
+// AddReplies adds the "replies" edges to the Post entity.
+func (pu *PostUpdate) AddReplies(p ...*Post) *PostUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return pu.AddReplyIDs(ids...)
+}
+
+// SetParentID sets the "parent" edge to the Post entity by ID.
+func (pu *PostUpdate) SetParentID(id uuid.UUID) *PostUpdate {
+	pu.mutation.SetParentID(id)
+	return pu
+}
+
+// SetNillableParentID sets the "parent" edge to the Post entity by ID if the given value is not nil.
+func (pu *PostUpdate) SetNillableParentID(id *uuid.UUID) *PostUpdate {
+	if id != nil {
+		pu = pu.SetParentID(*id)
+	}
+	return pu
+}
+
+// SetParent sets the "parent" edge to the Post entity.
+func (pu *PostUpdate) SetParent(p *Post) *PostUpdate {
+	return pu.SetParentID(p.ID)
+}
+
+// AddVoteIDs adds the "votes" edge to the Vote entity by IDs.
+func (pu *PostUpdate) AddVoteIDs(ids ...uuid.UUID) *PostUpdate {
+	pu.mutation.AddVoteIDs(ids...)
+	return pu
+}
+
+// AddVotes adds the "votes" edges to the Vote entity.
+func (pu *PostUpdate) AddVotes(v ...*Vote) *PostUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return pu.AddVoteIDs(ids...)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -70,6 +167,54 @@ func (pu *PostUpdate) Mutation() *PostMutation {
 func (pu *PostUpdate) ClearUser() *PostUpdate {
 	pu.mutation.ClearUser()
 	return pu
+}
+
+// ClearReplies clears all "replies" edges to the Post entity.
+func (pu *PostUpdate) ClearReplies() *PostUpdate {
+	pu.mutation.ClearReplies()
+	return pu
+}
+
+// RemoveReplyIDs removes the "replies" edge to Post entities by IDs.
+func (pu *PostUpdate) RemoveReplyIDs(ids ...uuid.UUID) *PostUpdate {
+	pu.mutation.RemoveReplyIDs(ids...)
+	return pu
+}
+
+// RemoveReplies removes "replies" edges to Post entities.
+func (pu *PostUpdate) RemoveReplies(p ...*Post) *PostUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return pu.RemoveReplyIDs(ids...)
+}
+
+// ClearParent clears the "parent" edge to the Post entity.
+func (pu *PostUpdate) ClearParent() *PostUpdate {
+	pu.mutation.ClearParent()
+	return pu
+}
+
+// ClearVotes clears all "votes" edges to the Vote entity.
+func (pu *PostUpdate) ClearVotes() *PostUpdate {
+	pu.mutation.ClearVotes()
+	return pu
+}
+
+// RemoveVoteIDs removes the "votes" edge to Vote entities by IDs.
+func (pu *PostUpdate) RemoveVoteIDs(ids ...uuid.UUID) *PostUpdate {
+	pu.mutation.RemoveVoteIDs(ids...)
+	return pu
+}
+
+// RemoveVotes removes "votes" edges to Vote entities.
+func (pu *PostUpdate) RemoveVotes(v ...*Vote) *PostUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return pu.RemoveVoteIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -115,9 +260,6 @@ func (pu *PostUpdate) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
-	if pu.mutation.UserCleared() && len(pu.mutation.UserIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Post.user"`)
-	}
 	return nil
 }
 
@@ -139,10 +281,21 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := pu.mutation.Tags(); ok {
+		_spec.SetField(post.FieldTags, field.TypeJSON, value)
+	}
+	if value, ok := pu.mutation.AppendedTags(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, post.FieldTags, value)
+		})
+	}
+	if pu.mutation.TagsCleared() {
+		_spec.ClearField(post.FieldTags, field.TypeJSON)
+	}
 	if pu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   post.UserTable,
 			Columns: []string{post.UserColumn},
 			Bidi:    false,
@@ -155,12 +308,131 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := pu.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   post.UserTable,
 			Columns: []string{post.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedRepliesIDs(); len(nodes) > 0 && !pu.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RepliesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.ParentTable,
+			Columns: []string{post.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.ParentTable,
+			Columns: []string{post.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.VotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedVotesIDs(); len(nodes) > 0 && !pu.mutation.VotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.VotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -208,15 +480,110 @@ func (puo *PostUpdateOne) SetUpdatedAt(t time.Time) *PostUpdateOne {
 	return puo
 }
 
+// SetTags sets the "tags" field.
+func (puo *PostUpdateOne) SetTags(s []string) *PostUpdateOne {
+	puo.mutation.SetTags(s)
+	return puo
+}
+
+// AppendTags appends s to the "tags" field.
+func (puo *PostUpdateOne) AppendTags(s []string) *PostUpdateOne {
+	puo.mutation.AppendTags(s)
+	return puo
+}
+
+// ClearTags clears the value of the "tags" field.
+func (puo *PostUpdateOne) ClearTags() *PostUpdateOne {
+	puo.mutation.ClearTags()
+	return puo
+}
+
+// SetReplyTo sets the "reply_to" field.
+func (puo *PostUpdateOne) SetReplyTo(u uuid.UUID) *PostUpdateOne {
+	puo.mutation.SetReplyTo(u)
+	return puo
+}
+
+// SetNillableReplyTo sets the "reply_to" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableReplyTo(u *uuid.UUID) *PostUpdateOne {
+	if u != nil {
+		puo.SetReplyTo(*u)
+	}
+	return puo
+}
+
+// ClearReplyTo clears the value of the "reply_to" field.
+func (puo *PostUpdateOne) ClearReplyTo() *PostUpdateOne {
+	puo.mutation.ClearReplyTo()
+	return puo
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (puo *PostUpdateOne) SetUserID(id uuid.UUID) *PostUpdateOne {
 	puo.mutation.SetUserID(id)
 	return puo
 }
 
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableUserID(id *uuid.UUID) *PostUpdateOne {
+	if id != nil {
+		puo = puo.SetUserID(*id)
+	}
+	return puo
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (puo *PostUpdateOne) SetUser(u *User) *PostUpdateOne {
 	return puo.SetUserID(u.ID)
+}
+
+// AddReplyIDs adds the "replies" edge to the Post entity by IDs.
+func (puo *PostUpdateOne) AddReplyIDs(ids ...uuid.UUID) *PostUpdateOne {
+	puo.mutation.AddReplyIDs(ids...)
+	return puo
+}
+
+// AddReplies adds the "replies" edges to the Post entity.
+func (puo *PostUpdateOne) AddReplies(p ...*Post) *PostUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return puo.AddReplyIDs(ids...)
+}
+
+// SetParentID sets the "parent" edge to the Post entity by ID.
+func (puo *PostUpdateOne) SetParentID(id uuid.UUID) *PostUpdateOne {
+	puo.mutation.SetParentID(id)
+	return puo
+}
+
+// SetNillableParentID sets the "parent" edge to the Post entity by ID if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableParentID(id *uuid.UUID) *PostUpdateOne {
+	if id != nil {
+		puo = puo.SetParentID(*id)
+	}
+	return puo
+}
+
+// SetParent sets the "parent" edge to the Post entity.
+func (puo *PostUpdateOne) SetParent(p *Post) *PostUpdateOne {
+	return puo.SetParentID(p.ID)
+}
+
+// AddVoteIDs adds the "votes" edge to the Vote entity by IDs.
+func (puo *PostUpdateOne) AddVoteIDs(ids ...uuid.UUID) *PostUpdateOne {
+	puo.mutation.AddVoteIDs(ids...)
+	return puo
+}
+
+// AddVotes adds the "votes" edges to the Vote entity.
+func (puo *PostUpdateOne) AddVotes(v ...*Vote) *PostUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return puo.AddVoteIDs(ids...)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -228,6 +595,54 @@ func (puo *PostUpdateOne) Mutation() *PostMutation {
 func (puo *PostUpdateOne) ClearUser() *PostUpdateOne {
 	puo.mutation.ClearUser()
 	return puo
+}
+
+// ClearReplies clears all "replies" edges to the Post entity.
+func (puo *PostUpdateOne) ClearReplies() *PostUpdateOne {
+	puo.mutation.ClearReplies()
+	return puo
+}
+
+// RemoveReplyIDs removes the "replies" edge to Post entities by IDs.
+func (puo *PostUpdateOne) RemoveReplyIDs(ids ...uuid.UUID) *PostUpdateOne {
+	puo.mutation.RemoveReplyIDs(ids...)
+	return puo
+}
+
+// RemoveReplies removes "replies" edges to Post entities.
+func (puo *PostUpdateOne) RemoveReplies(p ...*Post) *PostUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return puo.RemoveReplyIDs(ids...)
+}
+
+// ClearParent clears the "parent" edge to the Post entity.
+func (puo *PostUpdateOne) ClearParent() *PostUpdateOne {
+	puo.mutation.ClearParent()
+	return puo
+}
+
+// ClearVotes clears all "votes" edges to the Vote entity.
+func (puo *PostUpdateOne) ClearVotes() *PostUpdateOne {
+	puo.mutation.ClearVotes()
+	return puo
+}
+
+// RemoveVoteIDs removes the "votes" edge to Vote entities by IDs.
+func (puo *PostUpdateOne) RemoveVoteIDs(ids ...uuid.UUID) *PostUpdateOne {
+	puo.mutation.RemoveVoteIDs(ids...)
+	return puo
+}
+
+// RemoveVotes removes "votes" edges to Vote entities.
+func (puo *PostUpdateOne) RemoveVotes(v ...*Vote) *PostUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return puo.RemoveVoteIDs(ids...)
 }
 
 // Where appends a list predicates to the PostUpdate builder.
@@ -286,9 +701,6 @@ func (puo *PostUpdateOne) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
-	if puo.mutation.UserCleared() && len(puo.mutation.UserIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Post.user"`)
-	}
 	return nil
 }
 
@@ -327,10 +739,21 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	if value, ok := puo.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := puo.mutation.Tags(); ok {
+		_spec.SetField(post.FieldTags, field.TypeJSON, value)
+	}
+	if value, ok := puo.mutation.AppendedTags(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, post.FieldTags, value)
+		})
+	}
+	if puo.mutation.TagsCleared() {
+		_spec.ClearField(post.FieldTags, field.TypeJSON)
+	}
 	if puo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   post.UserTable,
 			Columns: []string{post.UserColumn},
 			Bidi:    false,
@@ -343,12 +766,131 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	if nodes := puo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   post.UserTable,
 			Columns: []string{post.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedRepliesIDs(); len(nodes) > 0 && !puo.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RepliesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.RepliesTable,
+			Columns: []string{post.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.ParentTable,
+			Columns: []string{post.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   post.ParentTable,
+			Columns: []string{post.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.VotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedVotesIDs(); len(nodes) > 0 && !puo.mutation.VotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.VotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   post.VotesTable,
+			Columns: []string{post.VotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vote.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

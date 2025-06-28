@@ -7,7 +7,6 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/gofrs/uuid/v5"
 )
 
 type Attachment struct {
@@ -16,10 +15,7 @@ type Attachment struct {
 
 func (Attachment) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(newUUID).
-			Unique().
-			Immutable(),
+		uuidField(),
 		field.String("caption").
 			Optional().
 			MaxLen(500),
