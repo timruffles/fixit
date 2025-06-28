@@ -1,0 +1,153 @@
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New Community</h1>
+        
+        {{if .Error}}
+        <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div class="text-red-800">{{.Error}}</div>
+        </div>
+        {{end}}
+
+        <form action="/community/create" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Community Name *
+                </label>
+                <input type="text" 
+                       id="name" 
+                       name="name" 
+                       required
+                       value="{{.Name}}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Enter community name"
+                       oninput="generateSlug()">
+            </div>
+
+            <div>
+                <label for="slug" class="block text-sm font-medium text-gray-700 mb-2">
+                    URL Slug *
+                </label>
+                <div class="flex">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                        /community/
+                    </span>
+                    <input type="text" 
+                           id="slug" 
+                           name="slug" 
+                           required
+                           value="{{.Slug}}"
+                           pattern="^[a-z0-9-]+$"
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="community-url-slug">
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Only lowercase letters, numbers, and hyphens allowed</p>
+            </div>
+
+            <div>
+                <label for="background" class="block text-sm font-medium text-gray-700 mb-2">
+                    Background Image
+                </label>
+                <input type="file" 
+                       id="background" 
+                       name="background" 
+                       accept="image/*"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                <p class="mt-1 text-sm text-gray-500">Optional background image for your community</p>
+            </div>
+
+            <input type="hidden" id="latitude" name="latitude" value="{{.Latitude}}">
+            <input type="hidden" id="longitude" name="longitude" value="{{.Longitude}}">
+
+            <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-blue-800">Location Detection</h3>
+                        <p class="text-sm text-blue-600 mt-1">Set your community's location for better discovery</p>
+                    </div>
+                    <button type="button" 
+                            id="detect-location"
+                            onclick="detectLocation()"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Detect Location
+                    </button>
+                </div>
+                <div id="location-status" class="mt-2 text-sm"></div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button type="button" 
+                        onclick="window.history.back()"
+                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Create Community
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function generateSlug() {
+    const name = document.getElementById('name').value;
+    const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    document.getElementById('slug').value = slug;
+}
+
+function detectLocation() {
+    const button = document.getElementById('detect-location');
+    const status = document.getElementById('location-status');
+    
+    if (!navigator.geolocation) {
+        status.innerHTML = '<span class="text-red-600">Geolocation is not supported by this browser.</span>';
+        return;
+    }
+    
+    button.disabled = true;
+    button.textContent = 'Detecting...';
+    status.innerHTML = '<span class="text-blue-600">Getting your location...</span>';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            status.innerHTML = `<span class="text-green-600">Location detected: ${lat.toFixed(6)}, ${lng.toFixed(6)}</span>`;
+            button.disabled = false;
+            button.textContent = 'Update Location';
+        },
+        function(error) {
+            let errorMsg = 'Unknown error occurred';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg = 'Location access denied by user';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg = 'Location information unavailable';
+                    break;
+                case error.TIMEOUT:
+                    errorMsg = 'Location request timed out';
+                    break;
+            }
+            status.innerHTML = `<span class="text-red-600">Error: ${errorMsg}</span>`;
+            button.disabled = false;
+            button.textContent = 'Detect Location';
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+        }
+    );
+}
+</script>
