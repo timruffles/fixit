@@ -1,3 +1,7 @@
+- the web/layouts package already has header footers, so when writing new templates
+  use that rather than defining headers etc
+- use the web/handler Wrap function to define high level handlers rather than using the imperative response writer in http package
+
 - use tailwind for css
 - use cobra for clis
 - use pkgerrors for returning errors not from other packages in this project (e.g. use `pkgerrors.WithStack(err)` on errors from stdlib or third-party libraries)

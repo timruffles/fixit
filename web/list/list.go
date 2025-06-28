@@ -47,7 +47,7 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/", handler.Wrap(h.handleList)).Methods("GET")
 }
 
-func (h *Handler) handleList(req *http.Request) (*handler.Response, error) {
+func (h *Handler) handleList(req *http.Request) (handler.Response, error) {
 	ctx := context.Background()
 	communityID := uuid.Must(uuid.NewV4())
 	filter := &community.Filter{}
