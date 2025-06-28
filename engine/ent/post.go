@@ -32,7 +32,7 @@ type Post struct {
 	// Tags holds the value of the "tags" field.
 	Tags []string `json:"tags,omitempty"`
 	// ReplyTo holds the value of the "reply_to" field.
-	ReplyTo uuid.UUID `json:"reply_to,omitempty"`
+	ReplyTo *uuid.UUID `json:"reply_to,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PostQuery when eager-loading is set.
 	Edges          PostEdges `json:"edges"`
@@ -114,13 +114,15 @@ func (*Post) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case post.FieldReplyTo:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case post.FieldTags:
 			values[i] = new([]byte)
 		case post.FieldTitle, post.FieldRole:
 			values[i] = new(sql.NullString)
 		case post.FieldCreatedAt, post.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case post.FieldID, post.FieldReplyTo:
+		case post.FieldID:
 			values[i] = new(uuid.UUID)
 		case post.ForeignKeys[0]: // post_user
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -180,10 +182,11 @@ func (po *Post) assignValues(columns []string, values []any) error {
 				}
 			}
 		case post.FieldReplyTo:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field reply_to", values[i])
-			} else if value != nil {
-				po.ReplyTo = *value
+			} else if value.Valid {
+				po.ReplyTo = new(uuid.UUID)
+				*po.ReplyTo = *value.S.(*uuid.UUID)
 			}
 		case post.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -275,8 +278,10 @@ func (po *Post) String() string {
 	builder.WriteString("tags=")
 	builder.WriteString(fmt.Sprintf("%v", po.Tags))
 	builder.WriteString(", ")
-	builder.WriteString("reply_to=")
-	builder.WriteString(fmt.Sprintf("%v", po.ReplyTo))
+	if v := po.ReplyTo; v != nil {
+		builder.WriteString("reply_to=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

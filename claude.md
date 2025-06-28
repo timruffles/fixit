@@ -20,9 +20,11 @@ This is a web application using golang. Structure:
 - Authboss templates should use {{if .errors}} pattern for validation errors
 - Auth module imports: _ "github.com/aarondl/authboss/v3/auth" and _ "github.com/aarondl/authboss/v3/register"
 
-
 - use tailwind for css
 - use cobra for clis
+
+## go 
+- put helper functions below important ones. e.g. put test helpers at bottom of test files. put main function at top of files, with functions they run beneath
 - use pkgerrors for returning errors not from other packages in this project (e.g. use `pkgerrors.WithStack(err)` on errors from stdlib or third-party libraries)
 - use testify assert for test assertions, and use require to prevent nil pointer exceptions etc (i.e. places the test should halt)
 - use table-driven tests tests with > 3 cases, where there's a lot of setup. use multiple calls to test fn and assert results if that's much shorter

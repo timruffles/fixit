@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	_ "github.com/lib/pq"
 
 	"fixit/engine/config"
 	"fixit/engine/ent"
@@ -17,38 +17,6 @@ import (
 	entPost "fixit/engine/ent/post"
 	"fixit/engine/post"
 )
-
-func setupTestDB(t *testing.T) *ent.Client {
-	// Use enttest with migrations - it handles cleaning up for us
-	// The WithMigrateOptions ensures we get a fresh schema each time
-	opts := []enttest.Option{
-		enttest.WithOptions(ent.Log(t.Log)),
-		enttest.WithMigrateOptions(),
-	}
-	
-	client := enttest.Open(t, "postgres", config.TestDBURL, opts...)
-	
-	return client
-}
-
-func createTestUser(t *testing.T, client *ent.Client, username string) *ent.User {
-	user, err := client.User.Create().
-		SetUsername(username).
-		SetEmail(username + "@example.com").
-		SetPassword("password123").
-		Save(context.Background())
-	require.NoError(t, err)
-	return user
-}
-
-func createTestCommunity(t *testing.T, client *ent.Client, name string) *ent.Community {
-	community, err := client.Community.Create().
-		SetName(name).
-		SetTitle("Test Community " + name).
-		Save(context.Background())
-	require.NoError(t, err)
-	return community
-}
 
 func TestRepository_CreatePostGraph(t *testing.T) {
 	client := setupTestDB(t)
@@ -89,7 +57,7 @@ func TestRepository_CreatePostGraph(t *testing.T) {
 	assert.NotNil(t, solutionPost)
 	assert.Equal(t, "Test Solution Post", solutionPost.Title)
 	assert.Equal(t, entPost.RoleSolution, solutionPost.Role)
-	assert.Equal(t, issuePost.ID, solutionPost.ReplyTo)
+	assert.Equal(t, issuePost.ID, *solutionPost.ReplyTo)
 
 	// Step 3: Create a verification post replying to the solution
 	verificationPost, err := repo.Create(ctx, post.PostCreateFields{
@@ -103,7 +71,7 @@ func TestRepository_CreatePostGraph(t *testing.T) {
 	assert.NotNil(t, verificationPost)
 	assert.Equal(t, "Test Verification Post", verificationPost.Title)
 	assert.Equal(t, entPost.RoleVerification, verificationPost.Role)
-	assert.Equal(t, solutionPost.ID, verificationPost.ReplyTo)
+	assert.Equal(t, solutionPost.ID, *verificationPost.ReplyTo)
 
 	// Verify the graph structure
 	// Load posts with edges
@@ -133,6 +101,7 @@ func TestRepository_ValidationErrors(t *testing.T) {
 
 	// Create test users and community
 	user := createTestUser(t, client, fmt.Sprintf("test_user_%d", time.Now().UnixNano()))
+	otherUser := createTestUser(t, client, fmt.Sprintf("other_test_user_%d", time.Now().UnixNano()))
 	community := createTestCommunity(t, client, fmt.Sprintf("test_community_%d", time.Now().UnixNano()))
 
 	// Test: Solution post without reply_to
@@ -188,12 +157,12 @@ func TestRepository_ValidationErrors(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Create a solution post
+	// Create a solution post (must be different user)
 	solutionPost, err := repo.Create(ctx, post.PostCreateFields{
 		Title:       "Valid Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &issuePost.ID,
-		UserID:      user.ID,
+		UserID:      otherUser.ID,
 		CommunityID: community.ID,
 	})
 	require.NoError(t, err)
@@ -203,7 +172,7 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Invalid Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &solutionPost.ID,
-		UserID:      user.ID,
+		UserID:      user.ID, // Can be same or different user, the issue is that it's replying to a non-top-level post
 		CommunityID: community.ID,
 	})
 	assert.Error(t, err)
@@ -294,4 +263,35 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.NotNil(t, verificationPost)
+}
+func setupTestDB(t *testing.T) *ent.Client {
+	// Use enttest with migrations - it handles cleaning up for us
+	// The WithMigrateOptions ensures we get a fresh schema each time
+	opts := []enttest.Option{
+		enttest.WithOptions(ent.Log(t.Log)),
+		enttest.WithMigrateOptions(),
+	}
+
+	client := enttest.Open(t, "postgres", config.TestDBURL, opts...)
+
+	return client
+}
+
+func createTestUser(t *testing.T, client *ent.Client, username string) *ent.User {
+	user, err := client.User.Create().
+		SetUsername(username).
+		SetEmail(username + "@example.com").
+		SetPassword("password123").
+		Save(context.Background())
+	require.NoError(t, err)
+	return user
+}
+
+func createTestCommunity(t *testing.T, client *ent.Client, name string) *ent.Community {
+	community, err := client.Community.Create().
+		SetName(name).
+		SetTitle("Test Community " + name).
+		Save(context.Background())
+	require.NoError(t, err)
+	return community
 }

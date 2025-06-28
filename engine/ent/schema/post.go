@@ -47,7 +47,8 @@ func (Post) Fields() []ent.Field {
 			Optional().
 			Default([]string{}),
 		field.UUID("reply_to", uuid.UUID{}).
-			Nillable(),
+			Nillable().
+			Optional(),
 	}
 }
 

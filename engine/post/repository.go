@@ -86,7 +86,7 @@ func (r *Repository) validateSolutionRole(ctx context.Context, fields PostCreate
 	}
 
 	// Parent must be top-level (no reply_to)
-	if !parentPost.ReplyTo.IsNil() {
+	if parentPost.ReplyTo != nil {
 		return errors.New("solution posts can only reply to top-level posts")
 	}
 

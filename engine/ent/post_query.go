@@ -670,9 +670,12 @@ func (pq *PostQuery) loadReplies(ctx context.Context, query *PostQuery, nodes []
 	}
 	for _, n := range neighbors {
 		fk := n.ReplyTo
-		node, ok := nodeids[fk]
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "reply_to" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "reply_to" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "reply_to" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -682,7 +685,10 @@ func (pq *PostQuery) loadParent(ctx context.Context, query *PostQuery, nodes []*
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Post)
 	for i := range nodes {
-		fk := nodes[i].ReplyTo
+		if nodes[i].ReplyTo == nil {
+			continue
+		}
+		fk := *nodes[i].ReplyTo
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}

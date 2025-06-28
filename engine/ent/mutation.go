@@ -888,7 +888,7 @@ func (m *PostMutation) ReplyTo() (r uuid.UUID, exists bool) {
 // OldReplyTo returns the old "reply_to" field's value of the Post entity.
 // If the Post object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PostMutation) OldReplyTo(ctx context.Context) (v uuid.UUID, err error) {
+func (m *PostMutation) OldReplyTo(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReplyTo is only allowed on UpdateOne operations")
 	}
