@@ -43,6 +43,8 @@ func (Post) Fields() []ent.Field {
 		field.JSON("tags", []string{}).
 			Optional().
 			Default([]string{}),
+		field.UUID("reply_to", uuid.UUID{}).
+			Optional(),
 	}
 }
 
@@ -53,5 +55,12 @@ func (Post) Edges() []ent.Edge {
 			Unique().
 			Required(),
 		edge.To("attachments", Attachment.Type),
+		edge.To("parent", Post.Type).
+			Field("reply_to").
+			Unique().
+			From("replies"),
+		edge.To("solution", Solution.Type).
+			Unique(),
+		edge.To("validations", Validation.Type),
 	}
 }

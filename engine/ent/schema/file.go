@@ -5,7 +5,6 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -33,9 +32,7 @@ func (File) Fields() []ent.Field {
 }
 
 func (File) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.To("attachments", Attachment.Type),
-	}
+	return nil
 }
 
 func (File) Annotations() []entsql.Annotation {
