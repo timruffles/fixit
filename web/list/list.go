@@ -1,12 +1,17 @@
 package list
 
 import (
+	"context"
 	"embed"
 	"html/template"
 	"log/slog"
 	"net/http"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
+
+	"fixit/engine/community"
+	"fixit/engine/ent"
 )
 
 //go:embed templates/*.html
@@ -14,23 +19,25 @@ var templates embed.FS
 
 type Handler struct {
 	tmpl *template.Template
+	repo *community.Repository
 }
 
-type Issue struct {
-	ID          int
-	Title       string
-	Reporter    string
-	Status      string
-	Comments    int
-	Category    string
-	TimeAgo     string
-	Priority    string
+type Post struct {
+	Title    string
+	Reporter string
+	Status   string
+	Comments int
+	Category string
+	TimeAgo  string
+	Priority string
 }
 
-func New() *Handler {
+func New(client *ent.Client) *Handler {
 	tmpl := template.Must(template.ParseFS(templates, "templates/*.html"))
+	repo := community.NewRepository(client)
 	return &Handler{
 		tmpl: tmpl,
+		repo: repo,
 	}
 }
 
@@ -39,19 +46,24 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *Handler) handleList(w http.ResponseWriter, r *http.Request) {
-	issues := []Issue{
-		{ID: 1, Title: "Large pothole on Main Street near bus stop", Reporter: "concerned_resident", Status: "Open", Comments: 12, Category: "Roads", TimeAgo: "2 hours ago", Priority: "High"},
-		{ID: 2, Title: "Graffiti on playground equipment at Central Park", Reporter: "park_visitor", Status: "In Progress", Comments: 5, Category: "Vandalism", TimeAgo: "4 hours ago", Priority: "Medium"},
-		{ID: 3, Title: "Fly-tipping behind grocery store on Oak Avenue", Reporter: "shop_owner", Status: "Open", Comments: 8, Category: "Waste", TimeAgo: "6 hours ago", Priority: "High"},
-		{ID: 4, Title: "Broken street lamp on Elm Street", Reporter: "night_walker", Status: "Assigned", Comments: 3, Category: "Lighting", TimeAgo: "1 day ago", Priority: "Medium"},
-		{ID: 5, Title: "Abandoned shopping trolleys in River Park", Reporter: "jogger123", Status: "Open", Comments: 15, Category: "Litter", TimeAgo: "1 day ago", Priority: "Low"},
-		{ID: 6, Title: "Deep potholes causing car damage on Bridge Road", Reporter: "daily_commuter", Status: "Open", Comments: 23, Category: "Roads", TimeAgo: "2 days ago", Priority: "Critical"},
-		{ID: 7, Title: "Graffiti tags on railway bridge", Reporter: "train_enthusiast", Status: "Resolved", Comments: 2, Category: "Vandalism", TimeAgo: "3 days ago", Priority: "Low"},
-		{ID: 8, Title: "Overflowing bins near school entrance", Reporter: "parent_council", Status: "In Progress", Comments: 7, Category: "Waste", TimeAgo: "4 days ago", Priority: "Medium"},
+	ctx := context.Background()
+	communityID := uuid.Must(uuid.NewV4())
+	filter := &community.Filter{}
+
+	entPosts, err := h.repo.ListPosts(ctx, communityID, filter)
+	if err != nil {
+		slog.Error("Failed to fetch posts", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	if err := h.tmpl.ExecuteTemplate(w, "list.html", issues); err != nil {
+	listTplParams := struct {
+		Posts []*ent.Post
+	}{
+		Posts: entPosts,
+	}
+	if err := h.tmpl.ExecuteTemplate(w, "list.html", listTplParams); err != nil {
 		slog.Error("Failed to execute template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

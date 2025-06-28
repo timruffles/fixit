@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/caarlos0/env/v11"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"fixit/web/app"
@@ -36,13 +38,19 @@ func init() {
 }
 
 func runWebServer(cmd *cobra.Command, args []string) error {
-	slog.Info("starting web server", "port", port)
+	slog.Info("starting web server")
 
-	webapp := app.New()
-	addr := ":" + port
+	cfg := app.Config{}
+	if err := env.Parse(&cfg); err != nil {
+		return errors.Wrap(err, "failed to parse env")
+	}
+	webapp, err := app.New(cfg)
+	if err != nil {
+		return err
+	}
 
-	slog.Info("server listening", "address", addr)
-	return webapp.Start(addr)
+	slog.Info("server listening", "port", cfg.Port)
+	return webapp.Start()
 }
 
 func main() {
