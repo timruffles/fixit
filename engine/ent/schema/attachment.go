@@ -33,14 +33,10 @@ func (Attachment) Fields() []ent.Field {
 
 func (Attachment) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("post", Post.Type).
-			Ref("attachments").
-			Unique().
-			Required(),
-		edge.From("file", File.Type).
-			Ref("attachments").
-			Unique().
-			Required(),
+		edge.To("post", Post.Type).
+			Unique().Required(),
+		edge.To("file", File.Type).
+			Unique().Required(),
 	}
 }
 

@@ -51,8 +51,9 @@ func (User) Fields() []ent.Field {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("posts", Post.Type),
-		edge.To("solutions", Solution.Type),
-		edge.To("validations", Validation.Type),
+		edge.From("posts", Post.Type).
+			Ref("user"),
+		edge.From("votes", Vote.Type).
+			Ref("user"),
 	}
 }
