@@ -3,10 +3,13 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"fixit/engine/auth"
 	"fixit/engine/community"
+	webcommunity "fixit/web/community"
 	"fixit/web/list"
+	"fixit/web/post"
 	"fixit/web/server"
 )
 
@@ -30,7 +33,7 @@ func New(cfg Config) (*App, error) {
 	}, nil
 }
 
-func (a *App) Start() error {
+func (a *App) InitForTesting() error {
 	if err := a.server.InitDB(a.cfg.DatabaseURL); err != nil {
 		return err
 	}
@@ -45,7 +48,7 @@ func (a *App) Start() error {
 	a.server.Router().Use(auth.Middleware(ab))
 
 	// Mount auth routes
-	a.server.Router().PathPrefix("/auth").Handler(ab.Config.Core.Router)
+	a.server.Router().PathPrefix("/auth").Handler(http.StripPrefix("/auth", ab.Config.Core.Router))
 
 	repo := community.NewRepository(a.server.Client())
 	if err := repo.Seed(context.Background()); err != nil {
@@ -54,6 +57,20 @@ func (a *App) Start() error {
 
 	listHandler := list.New(a.server.Client())
 	a.server.RegisterHandler(listHandler)
+	a.server.RegisterHandler(post.New())
+	a.server.RegisterHandler(webcommunity.New([]byte(a.cfg.Auth.SessionKey)))
+
+	return nil
+}
+
+func (a *App) Router() http.Handler {
+	return a.server.Router()
+}
+
+func (a *App) Start() error {
+	if err := a.InitForTesting(); err != nil {
+		return err
+	}
 
 	return a.server.Start(fmt.Sprintf(":%d", a.cfg.Port))
 }

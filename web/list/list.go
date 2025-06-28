@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"html/template"
-	"log/slog"
 	"net/http"
 
 	"github.com/gofrs/uuid/v5"
@@ -57,7 +56,6 @@ func (h *Handler) handleList(req *http.Request) (handler.Response, error) {
 		return nil, err
 	}
 
-	slog.Info("renderiind posts", "len", len(postItems))
 	data := struct {
 		Title string
 		Posts []community.PostListItem

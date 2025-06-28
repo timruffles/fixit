@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
-	"github.com/timr/oss/fixit/web/handler"
-	"github.com/timr/oss/fixit/web/layouts"
+	"fixit/web/handler"
+	"fixit/web/layouts"
 )
 
 //go:embed templates/create.gohtml
@@ -19,22 +19,14 @@ var createTplS string
 var createTpl = template.Must(template.New("create").Parse(createTplS))
 
 type CreatePostData struct {
-	Title string
-	Body  string
-	Tags  string
-	Error string
+	Title       string
+	Body        string
+	Tags        string
+	Error       string
+	CommunityID string
 }
 
-func CreatePostGetHandler(r *http.Request) (handler.Response, error) {
-	var data CreatePostData
-	content, err := renderCreatePost(data)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return handler.Ok(content), nil
-}
-
-func CreatePostPostHandler(r *http.Request) (handler.Response, error) {
+func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, error) {
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		return handler.BadInput([]byte("Failed to parse form")), nil
 	}
@@ -88,7 +80,22 @@ func New() *Handler {
 	return &Handler{}
 }
 
+func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error) {
+	vars := mux.Vars(r)
+	communityID := vars["slug"]
+
+	data := CreatePostData{
+		CommunityID: communityID,
+	}
+
+	content, err := renderCreatePost(data)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return handler.Ok(content), nil
+}
+
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/post/create", handler.Wrap(CreatePostGetHandler)).Methods("GET")
-	router.HandleFunc("/post/create", handler.Wrap(CreatePostPostHandler)).Methods("POST")
+	router.HandleFunc("/c/{slug}/post", handler.Wrap(h.CreatePostGetHandler)).Methods("GET")
+	router.HandleFunc("/api/post/create", handler.Wrap(h.CreatePostPostHandler)).Methods("POST")
 }

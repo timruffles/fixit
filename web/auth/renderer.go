@@ -3,52 +3,63 @@ package auth
 import (
 	"bytes"
 	"context"
+	"embed"
 	"html/template"
 	"path/filepath"
 
 	"github.com/aarondl/authboss/v3"
+	"github.com/pkg/errors"
+
+	"fixit/web/layouts"
 )
 
-type Renderer struct {
-	templates map[string]*template.Template
-}
+//go:embed templates/*.gohtml
+var templatesFS embed.FS
+var templates = template.Must(template.ParseFS(templatesFS, "templates/*.gohtml"))
+
+type Renderer struct{}
 
 func NewRenderer() *Renderer {
-	r := &Renderer{
-		templates: make(map[string]*template.Template),
-	}
-
-	// Load login template
-	loginTmpl := template.Must(template.New("login").Parse(loginTemplate))
-	r.templates["login"] = loginTmpl
-
-	// Load register template
-	registerTmpl := template.Must(template.New("register").Parse(registerTemplate))
-	r.templates["register"] = registerTmpl
-
-	return r
+	return &Renderer{}
 }
 
 var _ authboss.Renderer = (*Renderer)(nil)
 
 func (r *Renderer) Load(names ...string) error {
-	// Templates are already loaded in NewRenderer
 	return nil
 }
 
 func (r *Renderer) Render(ctx context.Context, page string, data authboss.HTMLData) (output []byte, contentType string, err error) {
-	templateName := filepath.Base(page)
-
-	tmpl, ok := r.templates[templateName]
-	if !ok {
-		// If template not found, use a default template
-		tmpl = r.templates["login"]
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
+	templateName := filepath.Base(page) + ".gohtml"
+	
+	// Execute the content template
+	content, err := templatesExecute(templateName, data)
+	if err != nil {
 		return nil, "", err
 	}
 
-	return buf.Bytes(), "text/html", nil
+	// Get the page title based on template name
+	title := "Login"
+	if templateName == "register.gohtml" {
+		title = "Sign Up"
+	}
+
+	// Render with layout
+	html, err := layouts.WithGeneral(layouts.LayoutData{
+		Title:   title + " - FixIt",
+		Content: template.HTML(content),
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	
+	return html, "text/html", nil
+}
+
+func templatesExecute(name string, data any) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := templates.ExecuteTemplate(&buf, name, data); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return buf.Bytes(), nil
 }

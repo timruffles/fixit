@@ -3,13 +3,16 @@ package community
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	"html/template"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 
-	"github.com/timr/oss/fixit/web/handler"
-	"github.com/timr/oss/fixit/web/layouts"
+	handler "fixit/web/handler"
+	"fixit/web/layouts"
 )
 
 //go:embed templates/create.gohtml
@@ -25,12 +28,99 @@ type CreateData struct {
 	Error     string
 }
 
-func CreateHandler(r *http.Request) (handler.Response, error) {
-	if r.Method == "GET" {
-		return showCreateForm(CreateData{})
+type Handler struct {
+	store *sessions.CookieStore
+}
+
+func New(sessionKey []byte) *Handler {
+	return &Handler{
+		store: sessions.NewCookieStore(sessionKey),
+	}
+}
+
+func (h *Handler) RegisterRoutes(router *mux.Router) {
+	router.HandleFunc("/community/new", handler.Wrap(h.CreateGetHandler)).Methods("GET")
+	router.HandleFunc("/api/community/create", handler.Wrap(h.CreatePostHandler)).Methods("POST")
+}
+
+func (h *Handler) CreateGetHandler(r *http.Request) (handler.Response, error) {
+	session, err := h.store.Get(r, "fixit_session")
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
-	return handler.BadInput([]byte("Method not allowed")), nil
+	data := CreateData{}
+	
+	// Check for flash data
+	if flashes := session.Flashes("form_data"); len(flashes) > 0 {
+		if jsonData, ok := flashes[0].(string); ok {
+			if err := json.Unmarshal([]byte(jsonData), &data); err != nil {
+				// Log error but continue with empty form
+			}
+		}
+	}
+
+	// Check for error message
+	if flashes := session.Flashes("error"); len(flashes) > 0 {
+		if errMsg, ok := flashes[0].(string); ok {
+			data.Error = errMsg
+		}
+	}
+
+	// Don't save session here - let the handler wrapper deal with it
+	// The flashes will be cleared automatically after being read
+
+	return showCreateForm(data)
+}
+
+func (h *Handler) CreatePostHandler(r *http.Request) (handler.Response, error) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return handler.BadInput([]byte("Failed to parse form")), nil
+	}
+
+	name := r.FormValue("name")
+	slug := r.FormValue("slug")
+	latitude := r.FormValue("latitude")
+	longitude := r.FormValue("longitude")
+
+	data := CreateData{
+		Name:      name,
+		Slug:      slug,
+		Latitude:  latitude,
+		Longitude: longitude,
+	}
+
+	// Validation
+	var validationError string
+	if name == "" {
+		validationError = "Community name is required"
+	} else if slug == "" {
+		validationError = "URL slug is required"
+	}
+
+	if validationError != "" {
+		// Store form data and error in session
+		session, err := h.store.Get(r, "fixit_session")
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		// Store form data as JSON
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		session.AddFlash(string(jsonData), "form_data")
+		session.AddFlash(validationError, "error")
+
+		// Must pass ResponseWriter to save session before redirect
+		return handler.RedirectWithSessionTo("/community/new", session, r), nil
+	}
+
+	// TODO: Save community to backend
+	
+	// Success - redirect to the community page
+	return handler.RedirectTo("/c/" + slug), nil
 }
 
 func showCreateForm(data CreateData) (handler.Response, error) {

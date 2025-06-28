@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/aarondl/authboss/v3"
+	_ "github.com/aarondl/authboss/v3/auth"
 	"github.com/aarondl/authboss/v3/defaults"
+	_ "github.com/aarondl/authboss/v3/register"
 
 	"fixit/engine/ent"
 	webauth "fixit/web/auth"

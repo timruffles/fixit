@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	"github.com/aarondl/authboss/v3"
 	"github.com/gofrs/uuid/v5"
@@ -97,8 +98,20 @@ func (s *Storer) Save(ctx context.Context, user authboss.User) error {
 	u := user.(User)
 
 	if u.ID == uuid.Nil {
+		// Generate username from email if not provided
+		username := u.Username
+		if username == "" {
+			// Extract username part from email before @
+			emailParts := strings.Split(u.Email, "@")
+			if len(emailParts) > 0 {
+				username = emailParts[0]
+			} else {
+				username = "user" + u.Email[:5] // Fallback
+			}
+		}
+		
 		_, err := s.client.User.Create().
-			SetUsername(u.Username).
+			SetUsername(username).
 			SetEmail(u.Email).
 			SetPassword(u.Password).
 			Save(ctx)

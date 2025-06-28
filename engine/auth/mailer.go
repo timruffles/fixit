@@ -2,9 +2,9 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/aarondl/authboss/v3"
-	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
@@ -25,10 +25,11 @@ func NewMailer(apiKey, fromName, fromAddr string) *Mailer {
 func (m *Mailer) Send(ctx context.Context, email authboss.Email) error {
 	from := mail.NewEmail(m.fromName, m.fromAddr)
 	to := mail.NewEmail("", email.To[0])
-	
+
 	message := mail.NewSingleEmail(from, email.Subject, to, email.TextBody, email.HTMLBody)
-	
-	client := sendgrid.NewSendClient(m.apiKey)
-	_, err := client.Send(message)
-	return err
+
+	//client := sendgrid.NewSendClient(m.apiKey)
+	//_, err := client.Send(message)
+	slog.Info("stubbed email", "message", message)
+	return nil
 }
