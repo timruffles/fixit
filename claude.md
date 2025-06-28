@@ -26,6 +26,8 @@ This is a web application using golang. Structure:
 - use pkgerrors for returning errors not from other packages in this project (e.g. use `pkgerrors.WithStack(err)` on errors from stdlib or third-party libraries)
 - use testify assert for test assertions, and use require to prevent nil pointer exceptions etc (i.e. places the test should halt)
 - use table-driven tests tests with > 3 cases, where there's a lot of setup. use multiple calls to test fn and assert results if that's much shorter
+- NEVER use t.Fail if you can use assert.Equal etc
+- NEVER write `// String returns a string` boilerplate comments
 
 - be very sparing with log calls. Use slog
 - don't add comments unless they're ncessary. e.g. if intention is not obvious from code, or code has side-effects that should be called out.

@@ -40,6 +40,9 @@ func (Post) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
+		field.JSON("tags", []string{}).
+			Optional().
+			Default([]string{}),
 	}
 }
 
@@ -49,5 +52,6 @@ func (Post) Edges() []ent.Edge {
 			Ref("posts").
 			Unique().
 			Required(),
+		edge.To("attachments", Attachment.Type),
 	}
 }

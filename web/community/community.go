@@ -50,7 +50,7 @@ func (h *Handler) CreateGetHandler(r *http.Request) (handler.Response, error) {
 	}
 
 	data := CreateData{}
-	
+
 	// Check for flash data
 	if flashes := session.Flashes("form_data"); len(flashes) > 0 {
 		if jsonData, ok := flashes[0].(string); ok {
@@ -113,12 +113,11 @@ func (h *Handler) CreatePostHandler(r *http.Request) (handler.Response, error) {
 		session.AddFlash(string(jsonData), "form_data")
 		session.AddFlash(validationError, "error")
 
-		// Must pass ResponseWriter to save session before redirect
-		return handler.RedirectWithSessionTo("/community/new", session, r), nil
+		return handler.RedirectTo("/community/new"), nil
 	}
 
 	// TODO: Save community to backend
-	
+
 	// Success - redirect to the community page
 	return handler.RedirectTo("/c/" + slug), nil
 }

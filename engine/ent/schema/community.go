@@ -25,10 +25,7 @@ func (Community) Annotations() []schema.Annotation {
 func (Community) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
-			Default(func() uuid.UUID {
-				v7, _ := uuid.NewV7()
-				return v7
-			}).
+			Default(newUUID).
 			Unique().
 			Immutable(),
 		field.String("name").
