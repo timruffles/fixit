@@ -2,9 +2,7 @@ package post_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/gofrs/uuid/v5"
 	_ "github.com/lib/pq"
@@ -15,6 +13,7 @@ import (
 	"fixit/engine/ent"
 	"fixit/engine/ent/enttest"
 	entPost "fixit/engine/ent/post"
+	"fixit/engine/factory"
 	"fixit/engine/post"
 )
 
@@ -24,12 +23,12 @@ func TestRepository_CreatePostGraph(t *testing.T) {
 	repo := post.New(client)
 
 	// Create test users
-	issueAuthor := createTestUser(t, client, fmt.Sprintf("issue_author_%d_%d", time.Now().UnixNano(), 1))
-	solutionAuthor := createTestUser(t, client, fmt.Sprintf("solution_author_%d_%d", time.Now().UnixNano(), 2))
-	verificationAuthor := createTestUser(t, client, fmt.Sprintf("verification_author_%d_%d", time.Now().UnixNano(), 3))
+	issueAuthor := factory.User(t, client, "issue-author-*")
+	solutionAuthor := factory.User(t, client, "solution-author-*")
+	verificationAuthor := factory.User(t, client, "verification-author-*")
 
 	// Create test community
-	community := createTestCommunity(t, client, fmt.Sprintf("test_community_%d", time.Now().UnixNano()))
+	community := factory.Community(t, client, "test-community-*")
 
 	// Step 1: Create an issue post
 	issuePost, err := repo.Create(ctx, post.PostCreateFields{
@@ -100,9 +99,9 @@ func TestRepository_ValidationErrors(t *testing.T) {
 	repo := post.New(client)
 
 	// Create test users and community
-	user := createTestUser(t, client, fmt.Sprintf("test_user_%d", time.Now().UnixNano()))
-	otherUser := createTestUser(t, client, fmt.Sprintf("other_test_user_%d", time.Now().UnixNano()))
-	community := createTestCommunity(t, client, fmt.Sprintf("test_community_%d", time.Now().UnixNano()))
+	user := factory.User(t, client, "test-user-*")
+	otherUser := factory.User(t, client, "other-test-user-*")
+	community := factory.Community(t, client, "test-community-*")
 
 	// Test: Solution post without reply_to
 	_, err := repo.Create(ctx, post.PostCreateFields{
@@ -206,9 +205,9 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 	repo := post.New(client)
 
 	// Create test users and community
-	user := createTestUser(t, client, fmt.Sprintf("test_user_%d", time.Now().UnixNano()))
-	otherUser := createTestUser(t, client, fmt.Sprintf("other_user_%d", time.Now().UnixNano()))
-	community := createTestCommunity(t, client, fmt.Sprintf("test_community_%d", time.Now().UnixNano()))
+	user := factory.User(t, client, "self-reply-user-*")
+	otherUser := factory.User(t, client, "self-reply-other-*")
+	community := factory.Community(t, client, "self-reply-community-*")
 
 	// Create an issue post by user
 	issuePost, err := repo.Create(ctx, post.PostCreateFields{
@@ -264,6 +263,7 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, verificationPost)
 }
+
 func setupTestDB(t *testing.T) *ent.Client {
 	// Use enttest with migrations - it handles cleaning up for us
 	// The WithMigrateOptions ensures we get a fresh schema each time
@@ -275,23 +275,4 @@ func setupTestDB(t *testing.T) *ent.Client {
 	client := enttest.Open(t, "postgres", config.TestDBURL, opts...)
 
 	return client
-}
-
-func createTestUser(t *testing.T, client *ent.Client, username string) *ent.User {
-	user, err := client.User.Create().
-		SetUsername(username).
-		SetEmail(username + "@example.com").
-		SetPassword("password123").
-		Save(context.Background())
-	require.NoError(t, err)
-	return user
-}
-
-func createTestCommunity(t *testing.T, client *ent.Client, name string) *ent.Community {
-	community, err := client.Community.Create().
-		SetName(name).
-		SetTitle("Test Community " + name).
-		Save(context.Background())
-	require.NoError(t, err)
-	return community
 }
