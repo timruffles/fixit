@@ -1,0 +1,73 @@
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New Post</h1>
+        
+        {{if .Error}}
+        <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div class="text-red-800">{{.Error}}</div>
+        </div>
+        {{end}}
+
+        <form action="/post/create" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Title *
+                </label>
+                <input type="text" 
+                       id="title" 
+                       name="title" 
+                       required
+                       value="{{.Title}}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Enter post title">
+            </div>
+
+            <div>
+                <label for="body" class="block text-sm font-medium text-gray-700 mb-2">
+                    Body
+                </label>
+                <textarea id="body" 
+                          name="body" 
+                          rows="8"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-vertical"
+                          placeholder="Write your post content here...">{{.Body}}</textarea>
+            </div>
+
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
+                    Image
+                </label>
+                <input type="file" 
+                       id="image" 
+                       name="image" 
+                       accept="image/*"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            </div>
+
+            <div>
+                <label for="tags" class="block text-sm font-medium text-gray-700 mb-2">
+                    Tags
+                </label>
+                <input type="text" 
+                       id="tags" 
+                       name="tags" 
+                       value="{{.Tags}}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Enter tags separated by commas (e.g., tech, programming, go)">
+                <p class="mt-1 text-sm text-gray-500">Separate multiple tags with commas</p>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button type="button" 
+                        onclick="window.history.back()"
+                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Create Post
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
