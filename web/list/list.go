@@ -65,7 +65,6 @@ func (h *Handler) handleList(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.tmpl.ExecuteTemplate(w, "list.html", listTplParams); err != nil {
 		slog.Error("Failed to execute template", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
