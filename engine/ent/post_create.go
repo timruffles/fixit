@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fixit/engine/ent/post"
+	"fixit/engine/ent/user"
 	"fmt"
 	"time"
 
@@ -67,6 +68,17 @@ func (pc *PostCreate) SetNillableID(u *uuid.UUID) *PostCreate {
 		pc.SetID(*u)
 	}
 	return pc
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (pc *PostCreate) SetUserID(id uuid.UUID) *PostCreate {
+	pc.mutation.SetUserID(id)
+	return pc
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (pc *PostCreate) SetUser(u *User) *PostCreate {
+	return pc.SetUserID(u.ID)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -134,6 +146,9 @@ func (pc *PostCreate) check() error {
 	if _, ok := pc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Post.updated_at"`)}
 	}
+	if len(pc.mutation.UserIDs()) == 0 {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Post.user"`)}
+	}
 	return nil
 }
 
@@ -180,6 +195,23 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := pc.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.UserTable,
+			Columns: []string{post.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_posts = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

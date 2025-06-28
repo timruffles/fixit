@@ -29,17 +29,42 @@ var (
 		{Name: "title", Type: field.TypeString, Size: 128},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_posts", Type: field.TypeUUID},
 	}
 	// PostTable holds the schema information for the "post" table.
 	PostTable = &schema.Table{
 		Name:       "post",
 		Columns:    PostColumns,
 		PrimaryKey: []*schema.Column{PostColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "post_user_posts",
+				Columns:    []*schema.Column{PostColumns[4]},
+				RefColumns: []*schema.Column{UserColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// UserColumns holds the columns for the "user" table.
+	UserColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "username", Type: field.TypeString, Unique: true, Size: 64},
+		{Name: "email", Type: field.TypeString, Unique: true, Size: 128},
+		{Name: "password", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// UserTable holds the schema information for the "user" table.
+	UserTable = &schema.Table{
+		Name:       "user",
+		Columns:    UserColumns,
+		PrimaryKey: []*schema.Column{UserColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CommunityTable,
 		PostTable,
+		UserTable,
 	}
 )
 
@@ -47,7 +72,11 @@ func init() {
 	CommunityTable.Annotation = &entsql.Annotation{
 		Table: "community",
 	}
+	PostTable.ForeignKeys[0].RefTable = UserTable
 	PostTable.Annotation = &entsql.Annotation{
 		Table: "post",
+	}
+	UserTable.Annotation = &entsql.Annotation{
+		Table: "user",
 	}
 }

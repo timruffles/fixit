@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fixit/engine/ent/post"
 	"fixit/engine/ent/predicate"
+	"fixit/engine/ent/user"
 	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	uuid "github.com/gofrs/uuid/v5"
 )
 
 // PostUpdate is the builder for updating Post entities.
@@ -48,9 +50,26 @@ func (pu *PostUpdate) SetUpdatedAt(t time.Time) *PostUpdate {
 	return pu
 }
 
+// SetUserID sets the "user" edge to the User entity by ID.
+func (pu *PostUpdate) SetUserID(id uuid.UUID) *PostUpdate {
+	pu.mutation.SetUserID(id)
+	return pu
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (pu *PostUpdate) SetUser(u *User) *PostUpdate {
+	return pu.SetUserID(u.ID)
+}
+
 // Mutation returns the PostMutation object of the builder.
 func (pu *PostUpdate) Mutation() *PostMutation {
 	return pu.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (pu *PostUpdate) ClearUser() *PostUpdate {
+	pu.mutation.ClearUser()
+	return pu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -96,6 +115,9 @@ func (pu *PostUpdate) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
+	if pu.mutation.UserCleared() && len(pu.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Post.user"`)
+	}
 	return nil
 }
 
@@ -116,6 +138,35 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if pu.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.UserTable,
+			Columns: []string{post.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.UserTable,
+			Columns: []string{post.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -157,9 +208,26 @@ func (puo *PostUpdateOne) SetUpdatedAt(t time.Time) *PostUpdateOne {
 	return puo
 }
 
+// SetUserID sets the "user" edge to the User entity by ID.
+func (puo *PostUpdateOne) SetUserID(id uuid.UUID) *PostUpdateOne {
+	puo.mutation.SetUserID(id)
+	return puo
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (puo *PostUpdateOne) SetUser(u *User) *PostUpdateOne {
+	return puo.SetUserID(u.ID)
+}
+
 // Mutation returns the PostMutation object of the builder.
 func (puo *PostUpdateOne) Mutation() *PostMutation {
 	return puo.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (puo *PostUpdateOne) ClearUser() *PostUpdateOne {
+	puo.mutation.ClearUser()
+	return puo
 }
 
 // Where appends a list predicates to the PostUpdate builder.
@@ -218,6 +286,9 @@ func (puo *PostUpdateOne) check() error {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Post.title": %w`, err)}
 		}
 	}
+	if puo.mutation.UserCleared() && len(puo.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Post.user"`)
+	}
 	return nil
 }
 
@@ -255,6 +326,35 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	}
 	if value, ok := puo.mutation.UpdatedAt(); ok {
 		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if puo.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.UserTable,
+			Columns: []string{post.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.UserTable,
+			Columns: []string{post.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Post{config: puo.config}
 	_spec.Assign = _node.assignValues

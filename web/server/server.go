@@ -37,7 +37,7 @@ func (s *Server) InitDB(databaseURL string) error {
 	s.client = client
 
 	ctx := context.Background()
-	if err := client.Debug().Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
+	if err := client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
 		return errors.WithStack(err)
 	}
 

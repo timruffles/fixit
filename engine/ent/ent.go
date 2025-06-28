@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fixit/engine/ent/community"
 	"fixit/engine/ent/post"
+	"fixit/engine/ent/user"
 	"fmt"
 	"reflect"
 	"sync"
@@ -76,6 +77,7 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			community.Table: community.ValidColumn,
 			post.Table:      post.ValidColumn,
+			user.Table:      user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

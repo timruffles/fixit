@@ -11,6 +11,11 @@ import (
 
 type Filter struct{}
 
+type PostListItem struct {
+	*ent.Post
+	Username string
+}
+
 type Repository struct {
 	client *ent.Client
 }
@@ -21,12 +26,24 @@ func NewRepository(client *ent.Client) *Repository {
 	}
 }
 
-func (r *Repository) ListPosts(ctx context.Context, communityID uuid.UUID, filter *Filter) ([]*ent.Post, error) {
-	posts, err := r.client.Post.Query().All(ctx)
+func (r *Repository) ListPosts(ctx context.Context, communityID uuid.UUID, filter *Filter) ([]PostListItem, error) {
+	posts, err := r.client.Post.Query().
+		WithUser().
+		All(ctx)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return posts, nil
+
+	var items []PostListItem
+	for _, post := range posts {
+		item := PostListItem{
+			Post:     post,
+			Username: post.Edges.User.Username,
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
 }
 
 func (r *Repository) Seed(ctx context.Context) error {
@@ -34,9 +51,34 @@ func (r *Repository) Seed(ctx context.Context) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	
+
 	if count > 0 {
 		return nil
+	}
+
+	// Create example users
+	users := []struct {
+		username string
+		email    string
+		password string
+	}{
+		{"alice", "alice@example.com", "password123"},
+		{"bob", "bob@example.com", "password123"},
+		{"charlie", "charlie@example.com", "password123"},
+		{"diana", "diana@example.com", "password123"},
+	}
+
+	var createdUsers []*ent.User
+	for _, userData := range users {
+		user, err := r.client.User.Create().
+			SetUsername(userData.username).
+			SetEmail(userData.email).
+			SetPassword(userData.password).
+			Save(ctx)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		createdUsers = append(createdUsers, user)
 	}
 
 	posts := []string{
@@ -50,9 +92,11 @@ func (r *Repository) Seed(ctx context.Context) error {
 		"Overflowing bins near school entrance",
 	}
 
-	for _, title := range posts {
+	for i, title := range posts {
+		userIndex := i % len(createdUsers)
 		_, err := r.client.Post.Create().
 			SetTitle(title).
+			SetUser(createdUsers[userIndex]).
 			Save(ctx)
 		if err != nil {
 			return errors.WithStack(err)

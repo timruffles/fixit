@@ -1,6 +1,7 @@
 package list
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"html/template"
@@ -9,16 +10,19 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 
 	"fixit/engine/community"
 	"fixit/engine/ent"
+	"fixit/web/handler"
+	"fixit/web/layouts"
 )
 
-//go:embed templates/*.html
-var templates embed.FS
+//go:embed templates/*.gohtml
+var templatesFS embed.FS
+var templates = template.Must(template.ParseFS(templatesFS, "templates/*.gohtml"))
 
 type Handler struct {
-	tmpl *template.Template
 	repo *community.Repository
 }
 
@@ -33,38 +37,55 @@ type Post struct {
 }
 
 func New(client *ent.Client) *Handler {
-	tmpl := template.Must(template.ParseFS(templates, "templates/*.html"))
 	repo := community.NewRepository(client)
 	return &Handler{
-		tmpl: tmpl,
 		repo: repo,
 	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/", h.handleList).Methods("GET")
+	router.HandleFunc("/", handler.Wrap(h.handleList)).Methods("GET")
 }
 
-func (h *Handler) handleList(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleList(req *http.Request) (*handler.Response, error) {
 	ctx := context.Background()
 	communityID := uuid.Must(uuid.NewV4())
 	filter := &community.Filter{}
 
-	entPosts, err := h.repo.ListPosts(ctx, communityID, filter)
+	postItems, err := h.repo.ListPosts(ctx, communityID, filter)
 	if err != nil {
-		slog.Error("Failed to fetch posts", "error", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	w.Header().Set("Content-Type", "text/html")
-	listTplParams := struct {
-		Posts []*ent.Post
+	slog.Info("renderiind posts", "len", len(postItems))
+	data := struct {
+		Title string
+		Posts []community.PostListItem
 	}{
-		Posts: entPosts,
+		Title: "Community Issues",
+		Posts: postItems,
 	}
-	if err := h.tmpl.ExecuteTemplate(w, "list.html", listTplParams); err != nil {
-		slog.Error("Failed to execute template", "error", err)
-		return
+
+	content, err := templatesExecute("list.gohtml", data)
+	if err != nil {
+		return nil, err
 	}
+
+	html, err := layouts.WithGeneral(layouts.LayoutData{
+		Title:   "Community Issues",
+		Content: template.HTML(content),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.Ok(html), nil
+}
+
+func templatesExecute(name string, data any) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := templates.ExecuteTemplate(&buf, name, data); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return buf.Bytes(), nil
 }
