@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"fixit/engine/factory"
 )
 
 func TestVerificationOrderingDescending(t *testing.T) {
@@ -25,9 +27,8 @@ func TestVerificationOrderingDescending(t *testing.T) {
 		Jar: jar,
 	}
 
-	// Generate unique credentials for this test
-	timestamp := time.Now().Unix()
-	username := "testuser" + strconv.FormatInt(timestamp, 10)
+	// Generate unique credentials for this test using factory
+	username := factory.Placeholder("testuser-*")
 	email := username + "@test.com"
 	password := "ValidPassword123!"
 
@@ -46,10 +47,10 @@ func TestVerificationOrderingDescending(t *testing.T) {
 	assert.Equal(t, http.StatusFound, registerResp.StatusCode)
 
 	// Step 2: Create a community
-	communityName := "test-community-" + strconv.FormatInt(timestamp, 10)
+	communityName := factory.Placeholder("test-community-*")
 	communityFields := map[string]string{
 		"name":     communityName,
-		"title":    "Test Community " + strconv.FormatInt(timestamp, 10),
+		"title":    "Test Community " + communityName,
 		"location": "Test Location",
 	}
 
@@ -60,7 +61,7 @@ func TestVerificationOrderingDescending(t *testing.T) {
 	assert.Equal(t, http.StatusFound, communityResp.StatusCode)
 
 	// Step 3: Create an issue post
-	issueTitle := "Verification Ordering Test Issue " + strconv.FormatInt(timestamp, 10)
+	issueTitle := factory.Placeholder("Verification Ordering Test Issue *")
 	issueFields := map[string]string{
 		"title":     issueTitle,
 		"body":      "This issue will test verification ordering",
@@ -113,7 +114,7 @@ func TestVerificationOrderingDescending(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		
 		// Create a new verifier user
-		verifierUsername := "verifier" + strconv.Itoa(i) + "_" + strconv.FormatInt(timestamp, 10)
+		verifierUsername := factory.Placeholder("verifier" + strconv.Itoa(i) + "-*")
 		verifierEmail := verifierUsername + "@test.com"
 
 		registerDataVerifier := url.Values{

@@ -1,14 +1,46 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"fixit/engine/config"
+	"fixit/engine/ent"
+	"fixit/engine/factory"
 )
 
 func TestFrontPage(t *testing.T) {
+	// Create test data using factory package
+	dbClient := createDBClient(t)
+	defer dbClient.Close()
+
+	// Create test users and community with posts
+	alice := factory.User(t, dbClient, "alice-*")
+	bob := factory.User(t, dbClient, "bob-*")
+	community := factory.Community(t, dbClient, "test-community-*")
+
+	// Create posts for the community
+	_, err := dbClient.Post.Create().
+		SetTitle("Large pothole on Main Street").
+		SetBody("There's a dangerous pothole that needs fixing").
+		SetUser(alice).
+		SetCommunity(community).
+		Save(context.Background())
+	require.NoError(t, err)
+
+	_, err = dbClient.Post.Create().
+		SetTitle("Graffiti on playground equipment").
+		SetBody("Playground equipment needs cleaning").
+		SetUser(bob).
+		SetCommunity(community).
+		Save(context.Background())
+	require.NoError(t, err)
+
+	// Test the front page shows communities
 	resp, err := http.Get(testServer.URL + "/")
 	require.NoError(t, err)
 	defer resp.Body.Close()
@@ -18,11 +50,29 @@ func TestFrontPage(t *testing.T) {
 
 	body := readResponseBody(t, resp)
 
-	assert.Contains(t, body, "<title>Community Issues</title>")
-	// Check that the page title is set correctly in the header
+	// Check front page content
+	assert.Contains(t, body, "FixIt - Community Issue Tracker")
+	assert.Contains(t, body, "Active Communities")
+	assert.Contains(t, body, community.Title)
+	assert.Contains(t, body, "/c/"+community.Name)
 
-	assert.Contains(t, body, "Large pothole on Main Street")
-	assert.Contains(t, body, "Graffiti on playground equipment")
-	assert.Contains(t, body, "alice")
-	assert.Contains(t, body, "bob")
+	// Test the community page shows posts and usernames
+	resp, err = http.Get(testServer.URL + "/c/" + community.Name)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	communityBody := readResponseBody(t, resp)
+
+	assert.Contains(t, communityBody, "Large pothole on Main Street")
+	assert.Contains(t, communityBody, "Graffiti on playground equipment")
+	assert.Contains(t, communityBody, alice.Username)
+	assert.Contains(t, communityBody, bob.Username)
 }
+
+func createDBClient(t *testing.T) *ent.Client {
+	client, err := ent.Open("postgres", config.TestDBURL)
+	require.NoError(t, err)
+	return client
+}
+

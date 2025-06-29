@@ -67,6 +67,7 @@ type CreatePostData struct {
 	CommunityID string
 	ReplyToID   string
 	PostType    string
+	PageTitle   string
 }
 
 type ShowPostData struct {
@@ -257,10 +258,17 @@ func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error
 	replyToID := r.URL.Query().Get("reply_to_id")
 	postType := r.URL.Query().Get("post_type")
 
-	title := "Post and issue"
+	title := "Post an issue"
+	switch post.Role(postType) {
+	case post.RoleSolution:
+		title = "Share a solution"
+	case post.RoleVerification:
+		title = "Verify a solution"
+	}
 
 	data := CreatePostData{
-		Title:       title,
+		PageTitle:   title,
+		Title:       "",
 		CommunityID: communityID,
 		ReplyToID:   replyToID,
 		PostType:    postType,
@@ -336,6 +344,7 @@ func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 		ID:                  postEntity.ID,
 		Title:               postEntity.Title,
 		Body:                postEntity.Body,
+		ImageURL:            postEntity.ImageURL,
 		User:                postEntity.Edges.User,
 		Community:           postEntity.Edges.Community,
 		CreatedAt:           postEntity.CreatedAt,

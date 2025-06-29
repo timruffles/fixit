@@ -3,6 +3,7 @@ package community
 import (
 	"context"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/pkg/errors"
 
 	"fixit/engine/ent"
@@ -90,6 +91,7 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 			post.HasCommunityWith(community.ID(comm.ID)),
 			post.RoleEQ(post.RoleIssue),
 		).
+		Order(post.ByCreatedAt(sql.OrderDesc())).
 		WithUser().
 		All(ctx)
 	if err != nil {
@@ -102,7 +104,7 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 		solved := false
 		pendingSolutions := 0
 		commentCount := 0
-		
+
 		if p.Role == post.RoleIssue {
 			// Get all solutions for this issue
 			solutions, err := r.client.Post.Query().
@@ -114,7 +116,7 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 					q.Where(post.RoleEQ(post.RoleVerification))
 				}).
 				All(ctx)
-			
+
 			if err == nil {
 				for _, solution := range solutions {
 					// Check if this solution has any verification replies
@@ -126,7 +128,7 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 					}
 				}
 			}
-			
+
 			// Count all replies (solutions + verifications + chats)
 			totalReplies, err := r.client.Post.Query().
 				Where(post.ReplyToEQ(p.ID)).
