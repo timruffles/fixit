@@ -110,7 +110,7 @@ func (r *Repository) validateSolutionRole(ctx context.Context, fields PostCreate
 		return errors.New("solution posts must reply to an existing post")
 	}
 
-	// Check that the parent post exists, is top-level, and has 'issue' tag
+	// Check that the parent post exists, is top-level, and has 'issue' role
 	parentPost, err := r.client.Post.Query().
 		Where(post.ID(*fields.ReplyTo)).
 		WithUser().
@@ -127,21 +127,9 @@ func (r *Repository) validateSolutionRole(ctx context.Context, fields PostCreate
 		return errors.New("solution posts can only reply to top-level posts")
 	}
 
-	// Parent must have 'issue' tag
-	hasIssueTag := false
-	for _, tag := range parentPost.Tags {
-		if tag == "issue" {
-			hasIssueTag = true
-			break
-		}
-	}
-	if !hasIssueTag {
-		return errors.New("solution posts can only reply to posts with 'issue' tag")
-	}
-
-	// Check that the user is not replying to their own post
-	if parentPost.Edges.User != nil && parentPost.Edges.User.ID == userID {
-		return errors.New("users cannot reply to their own posts with solution role")
+	// Parent must have 'issue' role
+	if parentPost.Role != post.RoleIssue {
+		return errors.New("solution posts can only reply to posts with 'issue' role")
 	}
 
 	return nil

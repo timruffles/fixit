@@ -24,8 +24,10 @@ type Filter struct {
 
 type PostListItem struct {
 	*ent.Post
-	Username string
-	Solved   bool
+	Username         string
+	Solved           bool
+	PendingSolutions int
+	CommentCount     int
 }
 
 type Repository struct {
@@ -84,7 +86,10 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 
 	// Then query posts for that community
 	posts, err := r.client.Post.Query().
-		Where(post.HasCommunityWith(community.ID(comm.ID))).
+		Where(
+			post.HasCommunityWith(community.ID(comm.ID)),
+			post.RoleEQ(post.RoleIssue),
+		).
 		WithUser().
 		All(ctx)
 	if err != nil {
@@ -93,24 +98,50 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 
 	var items []PostListItem
 	for _, p := range posts {
-		// Check if p has solution replies to determine if it's solved
+		// Calculate various metrics for the post
 		solved := false
+		pendingSolutions := 0
+		commentCount := 0
+		
 		if p.Role == post.RoleIssue {
-			solutionCount, err := r.client.Post.Query().
+			// Get all solutions for this issue
+			solutions, err := r.client.Post.Query().
 				Where(
 					post.RoleEQ(post.RoleSolution),
 					post.ReplyToEQ(p.ID),
 				).
+				WithReplies(func(q *ent.PostQuery) {
+					q.Where(post.RoleEQ(post.RoleVerification))
+				}).
+				All(ctx)
+			
+			if err == nil {
+				for _, solution := range solutions {
+					// Check if this solution has any verification replies
+					hasVerification := len(solution.Edges.Replies) > 0
+					if hasVerification {
+						solved = true
+					} else {
+						pendingSolutions++
+					}
+				}
+			}
+			
+			// Count all replies (solutions + verifications + chats)
+			totalReplies, err := r.client.Post.Query().
+				Where(post.ReplyToEQ(p.ID)).
 				Count(ctx)
-			if err == nil && solutionCount > 0 {
-				solved = true
+			if err == nil {
+				commentCount = totalReplies
 			}
 		}
 
 		item := PostListItem{
-			Post:     p,
-			Username: p.Edges.User.Username,
-			Solved:   solved,
+			Post:             p,
+			Username:         p.Edges.User.Username,
+			Solved:           solved,
+			PendingSolutions: pendingSolutions,
+			CommentCount:     commentCount,
 		}
 		items = append(items, item)
 	}

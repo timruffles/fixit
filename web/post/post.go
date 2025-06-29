@@ -60,6 +60,8 @@ type CreatePostData struct {
 	Tags        string
 	Error       string
 	CommunityID string
+	ReplyToID   string
+	PostType    string
 }
 
 type ShowPostData struct {
@@ -96,12 +98,16 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 	body := r.FormValue("body")
 	tags := r.FormValue("tags")
 	communitySlug := r.FormValue("community")
+	replyToID := r.FormValue("reply_to_id")
+	postType := r.FormValue("post_type")
 
 	data := CreatePostData{
 		Title:       title,
 		Body:        body,
 		Tags:        tags,
 		CommunityID: communitySlug,
+		ReplyToID:   replyToID,
+		PostType:    postType,
 	}
 
 	if title == "" {
@@ -151,13 +157,42 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 		}
 	}
 
+	// Determine post role based on post_type
+	var postRole post.Role
+	switch postType {
+	case "solution":
+		postRole = post.RoleSolution
+	case "verification":
+		postRole = post.RoleVerification
+	case "chat":
+		postRole = post.RoleChat
+	default:
+		postRole = post.RoleIssue // Default to issue for new posts
+	}
+
+	// Parse reply_to_id if provided
+	var replyToUUID *uuid.UUID
+	if replyToID != "" {
+		parsedUUID, err := uuid.FromString(replyToID)
+		if err != nil {
+			data.Error = "Invalid reply_to_id format"
+			content, renderErr := renderCreatePost(data)
+			if renderErr != nil {
+				return nil, errors.WithStack(renderErr)
+			}
+			return handler.BadInput(content), nil
+		}
+		replyToUUID = &parsedUUID
+	}
+
 	// Create post using repository
 	fields := postEngine.PostCreateFields{
 		Title:       title,
 		Body:        body,
-		Role:        post.RoleIssue, // Default to issue for new posts
+		Role:        postRole,
 		Tags:        tagsList,
 		CommunityID: comm.ID,
+		ReplyTo:     replyToUUID,
 	}
 
 	createdPost, err := h.postRepo.Create(ctx, fields, user.User)
@@ -208,8 +243,14 @@ func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error
 	vars := mux.Vars(r)
 	communityID := vars["slug"]
 
+	// Parse query parameters
+	replyToID := r.URL.Query().Get("reply_to_id")
+	postType := r.URL.Query().Get("post_type")
+
 	data := CreatePostData{
 		CommunityID: communityID,
+		ReplyToID:   replyToID,
+		PostType:    postType,
 	}
 
 	content, err := renderCreatePost(data)
@@ -219,13 +260,6 @@ func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error
 	return handler.Ok(content), nil
 }
 
-func mustParseUUID(s string) uuid.UUID {
-	id, err := uuid.FromString(s)
-	if err != nil {
-		panic("invalid UUID: " + s)
-	}
-	return id
-}
 
 func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 	vars := mux.Vars(r)

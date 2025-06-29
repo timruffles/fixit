@@ -46,9 +46,9 @@
                     {{end}}
                 </div>
                 {{if not .HasAcceptedSolution}}
-                <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <a href="/c/{{.Community.Name}}/post?reply_to_id={{.ID}}&post_type=solution" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Solve This
-                </button>
+                </a>
                 {{end}}
             </div>
             {{end}}
@@ -116,9 +116,14 @@
                     {{else}}
                     <span class="text-xs text-gray-500">No verifications yet</span>
                     {{end}}
-                    <button type="button" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200">
-                        Accept Solution
-                    </button>
+                    <div class="flex space-x-2">
+                        <button type="button" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200">
+                            Accept Solution
+                        </button>
+                        <a href="/c/{{$.Community.Name}}/post?reply_to_id={{.ID}}&post_type=verification" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200">
+                            Verify Solution
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,10 +133,15 @@
     {{end}}
 
     <!-- Chat Messages Section -->
-    {{if .ChatMessages}}
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Discussion</h2>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Discussion</h2>
+            <a href="/c/{{.Community.Name}}/post?reply_to_id={{.ID}}&post_type=chat" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Reply
+            </a>
+        </div>
         
+        {{if .ChatMessages}}
         {{range .ChatMessages}}
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
             <div class="px-6 py-4">
@@ -151,6 +161,8 @@
             </div>
         </div>
         {{end}}
+        {{else}}
+        <p class="text-gray-500 text-sm">No discussion yet. Be the first to start the conversation!</p>
+        {{end}}
     </div>
-    {{end}}
 </div>

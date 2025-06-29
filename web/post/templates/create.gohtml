@@ -46,6 +46,8 @@
 
 
             <input type="hidden" name="community" value="{{ .CommunityID }}" />
+            {{if .ReplyToID}}<input type="hidden" name="reply_to_id" value="{{ .ReplyToID }}" />{{end}}
+            {{if .PostType}}<input type="hidden" name="post_type" value="{{ .PostType }}" />{{end}}
 
             <div>
                 <label for="tags" class="block text-sm font-medium text-gray-700 mb-2">
