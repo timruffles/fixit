@@ -10,8 +10,14 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     background: white;
     padding: 4px;
-    border-radius: 8px;
+    border-radius: 0px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 640px) {
+    .polaroid-image {
+        border-radius: 8px;
+    }
 }
 
 .polaroid-image:hover {
@@ -58,7 +64,7 @@
 <!-- Community Header -->
 <div class="mb-8">
     {{if .Community.BannerImageURL}}
-    <div class="relative h-48 bg-cover bg-center rounded-lg overflow-hidden" style="background-image: url('{{.Community.BannerImageURL}}');">
+    <div class="relative h-48 bg-cover bg-center sm:rounded-lg overflow-hidden" style="background-image: url('{{.Community.BannerImageURL}}');">
         <div class="absolute inset-0 bg-black bg-opacity-40"></div>
         <div class="relative z-10 flex items-end h-full p-6">
             <div class="flex-1">
@@ -69,7 +75,7 @@
                 <p class="text-gray-200">{{.Community.Location}}</p>
                 {{end}}
             </div>
-            <a class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+            <a class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 sm:rounded-lg transition-colors duration-200"
                 href="/c/{{.Community.Name}}/post"
                 >
                 New Post
@@ -77,7 +83,7 @@
         </div>
     </div>
     {{else}}
-    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 sm:rounded-lg p-6 text-white">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold mb-2">
@@ -87,7 +93,7 @@
                 <p class="text-blue-100">{{.Community.Location}}</p>
                 {{end}}
             </div>
-            <a class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+            <a class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-4 sm:rounded-lg transition-colors duration-200"
                href="/c/{{.Community.Name}}/post"
             >
 
@@ -100,7 +106,7 @@
 
 <div class="space-y-4">
     {{range $index, $post := .Posts}}
-    <div class="{{if $post.Solved}}bg-green-50 border-green-200{{else}}bg-white border-gray-200{{end}} rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
+    <div class="{{if $post.Solved}}bg-green-50 border-green-200{{else}}bg-white border-gray-200{{end}} sm:rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
         <div class="flex p-4">
             <!-- Vote section -->
             <div class="flex flex-col items-center mr-4 space-y-1">
@@ -150,7 +156,7 @@
                     {{if $post.ImageURL}}
                     <div class="polaroid-container flex-shrink-0">
                         <div class="polaroid-image rotate-left">
-                            <img src="{{$post.ImageURL}}" alt="Post image" class="w-20 h-20 object-cover rounded-lg">
+                            <img src="{{$post.ImageURL}}" alt="Post image" class="w-20 h-20 object-cover sm:rounded-lg">
                             <div class="polaroid-shadow"></div>
                         </div>
                     </div>

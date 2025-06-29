@@ -116,7 +116,7 @@ func TestPostWithImages(t *testing.T) {
 }
 
 func createDBClient(t *testing.T) *ent.Client {
-	client, err := ent.Open("postgres", config.TestDBURL)
+	client, err := ent.Open("postgres", config.GetTestDBURL())
 	require.NoError(t, err)
 	return client
 }

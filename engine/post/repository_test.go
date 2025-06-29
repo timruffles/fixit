@@ -120,16 +120,16 @@ func TestRepository_ValidationErrors(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "parent post not found")
 
-	// Create an issue post without 'issue' tag
+	// Create a post without 'issue' role
 	nonIssuePost, err := repo.Create(ctx, post.PostCreateFields{
 		Title:       "Non-Issue Post",
-		Role:        entPost.RoleIssue,
+		Role:        entPost.RoleChat,
 		Tags:        []string{"discussion"},
 		CommunityID: community.ID,
 	}, user)
 	require.NoError(t, err)
 
-	// Test: Solution post replying to post without 'issue' tag
+	// Test: Solution post replying to post without 'issue' role
 	_, err = repo.Create(ctx, post.PostCreateFields{
 		Title:       "Invalid Solution",
 		Role:        entPost.RoleSolution,
@@ -137,7 +137,7 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		CommunityID: community.ID,
 	}, user)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "solution posts can only reply to posts with 'issue' tag")
+	assert.Contains(t, err.Error(), "solution posts can only reply to posts with 'issue' role")
 
 	// Create a proper issue post
 	issuePost, err := repo.Create(ctx, post.PostCreateFields{
@@ -206,15 +206,15 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 	}, user)
 	require.NoError(t, err)
 
-	// Test: User cannot reply to their own issue with a solution
-	_, err = repo.Create(ctx, post.PostCreateFields{
+	// Test: User CAN reply to their own issue with a solution (this was changed)
+	selfSolution, err := repo.Create(ctx, post.PostCreateFields{
 		Title:       "Self Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &issuePost.ID,
 		CommunityID: community.ID,
 	}, user) // Same user as issue author
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "users cannot reply to their own posts with solution role")
+	require.NoError(t, err) // This should now succeed
+	assert.NotNil(t, selfSolution)
 
 	// Test: Other user CAN reply with a solution
 	solutionPost, err := repo.Create(ctx, post.PostCreateFields{
@@ -302,7 +302,7 @@ func setupTestDB(t *testing.T) *ent.Client {
 		enttest.WithMigrateOptions(),
 	}
 
-	client := enttest.Open(t, "postgres", config.TestDBURL, opts...)
+	client := enttest.Open(t, "postgres", config.GetTestDBURL(), opts...)
 
 	return client
 }

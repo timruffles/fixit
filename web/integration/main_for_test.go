@@ -23,7 +23,7 @@ var testConfig app.Config
 
 func setup() {
 	testConfig = app.Config{
-		DatabaseURL: config.TestDBURL,
+		DatabaseURL: config.GetTestDBURL(),
 		Port:        0,
 		Auth: auth.Config{
 			SessionKey:  "test-32-byte-secret-key-here!!!",

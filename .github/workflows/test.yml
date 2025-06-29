@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: fixit
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: fixit_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Generate Ent code
+      run: go generate ./engine/ent
+
+    - name: Wait for PostgreSQL
+      run: |
+        until pg_isready -h localhost -p 5432 -U fixit; do
+          echo "Waiting for PostgreSQL..."
+          sleep 2
+        done
+        echo "PostgreSQL is ready!"
+
+    - name: Run unit tests
+      run: go test -v ./engine/...
+      env:
+        TEST_DATABASE_URL: postgres://fixit:password@localhost:5432/fixit_test?sslmode=disable
+
+    - name: Run integration tests  
+      run: go test ./web/integration -v
+      env:
+        TEST_DATABASE_URL: postgres://fixit:password@localhost:5432/fixit_test?sslmode=disable
+
+    - name: Build application
+      run: go build -o fixit-server ./cmd
+
+    - name: Run linting (if available)
+      run: |
+        if command -v golangci-lint &> /dev/null; then
+          golangci-lint run
+        else
+          echo "golangci-lint not available, skipping linting"
+        fi
+      continue-on-error: true
