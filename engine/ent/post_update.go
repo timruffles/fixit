@@ -47,6 +47,26 @@ func (pu *PostUpdate) SetNillableTitle(s *string) *PostUpdate {
 	return pu
 }
 
+// SetBody sets the "body" field.
+func (pu *PostUpdate) SetBody(s string) *PostUpdate {
+	pu.mutation.SetBody(s)
+	return pu
+}
+
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableBody(s *string) *PostUpdate {
+	if s != nil {
+		pu.SetBody(*s)
+	}
+	return pu
+}
+
+// ClearBody clears the value of the "body" field.
+func (pu *PostUpdate) ClearBody() *PostUpdate {
+	pu.mutation.ClearBody()
+	return pu
+}
+
 // SetRole sets the "role" field.
 func (pu *PostUpdate) SetRole(po post.Role) *PostUpdate {
 	pu.mutation.SetRole(po)
@@ -313,6 +333,12 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
 	}
+	if value, ok := pu.mutation.Body(); ok {
+		_spec.SetField(post.FieldBody, field.TypeString, value)
+	}
+	if pu.mutation.BodyCleared() {
+		_spec.ClearField(post.FieldBody, field.TypeString)
+	}
 	if value, ok := pu.mutation.Role(); ok {
 		_spec.SetField(post.FieldRole, field.TypeEnum, value)
 	}
@@ -538,6 +564,26 @@ func (puo *PostUpdateOne) SetNillableTitle(s *string) *PostUpdateOne {
 	if s != nil {
 		puo.SetTitle(*s)
 	}
+	return puo
+}
+
+// SetBody sets the "body" field.
+func (puo *PostUpdateOne) SetBody(s string) *PostUpdateOne {
+	puo.mutation.SetBody(s)
+	return puo
+}
+
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableBody(s *string) *PostUpdateOne {
+	if s != nil {
+		puo.SetBody(*s)
+	}
+	return puo
+}
+
+// ClearBody clears the value of the "body" field.
+func (puo *PostUpdateOne) ClearBody() *PostUpdateOne {
+	puo.mutation.ClearBody()
 	return puo
 }
 
@@ -836,6 +882,12 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	}
 	if value, ok := puo.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Body(); ok {
+		_spec.SetField(post.FieldBody, field.TypeString, value)
+	}
+	if puo.mutation.BodyCleared() {
+		_spec.ClearField(post.FieldBody, field.TypeString)
 	}
 	if value, ok := puo.mutation.Role(); ok {
 		_spec.SetField(post.FieldRole, field.TypeEnum, value)

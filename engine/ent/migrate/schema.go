@@ -30,6 +30,7 @@ var (
 	PostColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "title", Type: field.TypeString, Size: 128},
+		{Name: "body", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"issue", "solution", "verification", "chat"}, Default: "issue"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -46,19 +47,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "post_user_user",
-				Columns:    []*schema.Column{PostColumns[6]},
+				Columns:    []*schema.Column{PostColumns[7]},
 				RefColumns: []*schema.Column{UserColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "post_community_community",
-				Columns:    []*schema.Column{PostColumns[7]},
+				Columns:    []*schema.Column{PostColumns[8]},
 				RefColumns: []*schema.Column{CommunityColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "post_post_parent",
-				Columns:    []*schema.Column{PostColumns[8]},
+				Columns:    []*schema.Column{PostColumns[9]},
 				RefColumns: []*schema.Column{PostColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

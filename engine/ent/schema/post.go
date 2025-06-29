@@ -34,6 +34,8 @@ func (Post) Fields() []ent.Field {
 		field.String("title").
 			MinLen(5).
 			MaxLen(128),
+		field.Text("body").
+			Optional(),
 		field.Enum("role").
 			Values("issue", "solution", "verification", "chat").
 			Default("issue"),

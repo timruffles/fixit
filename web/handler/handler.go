@@ -6,6 +6,8 @@ import (
 	"net/url"
 
 	"github.com/gorilla/sessions"
+
+	"fixit/web/errors"
 )
 
 // Fn is a high level handler that synchrounsly returns (Response, error) rather than
@@ -25,7 +27,7 @@ func Wrap(fn Fn) func(http.ResponseWriter,
 		resI, err := fn(request)
 		if err != nil {
 			slog.Error("error in handler", "err", err)
-			writer.WriteHeader(500)
+			errors.Handle500(writer, request, err)
 			return
 		}
 
@@ -46,12 +48,14 @@ func Wrap(fn Fn) func(http.ResponseWriter,
 		case *RedirectWithSession:
 			// Save session before redirect
 			if err := res.Session.Save(request, writer); err != nil {
-				writer.WriteHeader(500)
+				slog.Error("error saving session", "err", err)
+				errors.Handle500(writer, request, err)
 				return
 			}
 			http.Redirect(writer, request, res.To, http.StatusFound)
 		default:
-			writer.WriteHeader(500)
+			slog.Error("unknown response type")
+			errors.Handle500(writer, request, nil)
 		}
 	}
 

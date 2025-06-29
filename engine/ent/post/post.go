@@ -18,6 +18,8 @@ const (
 	FieldID = "id"
 	// FieldTitle holds the string denoting the title field in the database.
 	FieldTitle = "title"
+	// FieldBody holds the string denoting the body field in the database.
+	FieldBody = "body"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -75,6 +77,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldTitle,
+	FieldBody,
 	FieldRole,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -158,6 +161,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByTitle orders the results by the title field.
 func ByTitle(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTitle, opts...).ToFunc()
+}
+
+// ByBody orders the results by the body field.
+func ByBody(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBody, opts...).ToFunc()
 }
 
 // ByRole orders the results by the role field.

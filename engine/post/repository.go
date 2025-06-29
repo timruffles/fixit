@@ -27,6 +27,7 @@ func New(client *ent.Client) *Repository {
 
 type PostCreateFields struct {
 	Title       string     `json:"title,omitempty"`
+	Body        string     `json:"body,omitempty"`
 	Role        post.Role  `json:"role,omitempty"`
 	Tags        []string   `json:"tags,omitempty"`
 	ReplyTo     *uuid.UUID `json:"replyTo,omitempty"`
@@ -38,6 +39,7 @@ func (r *Repository) Create(ctx context.Context, fields PostCreateFields, user *
 	// Create fields with user ID for validation
 	validationFields := PostCreateFields{
 		Title:       fields.Title,
+		Body:        fields.Body,
 		Role:        fields.Role,
 		Tags:        fields.Tags,
 		ReplyTo:     fields.ReplyTo,
@@ -55,6 +57,10 @@ func (r *Repository) Create(ctx context.Context, fields PostCreateFields, user *
 		SetRole(fields.Role).
 		SetUserID(user.ID).
 		SetCommunityID(fields.CommunityID)
+
+	if fields.Body != "" {
+		builder.SetBody(fields.Body)
+	}
 
 	if fields.Tags != nil {
 		builder.SetTags(fields.Tags)

@@ -9,6 +9,7 @@ import (
 	"fixit/engine/community"
 	enginePost "fixit/engine/post"
 	webcommunity "fixit/web/community"
+	weberrors "fixit/web/errors"
 	"fixit/web/frontpage"
 	"fixit/web/list"
 	"fixit/web/post"
@@ -45,7 +46,7 @@ func (a *App) Initialize() error {
 		return err
 	}
 
-	a.server.Router().Use(auth.Middleware(ab))
+	a.server.Router().Use(auth.Middleware(ab)...)
 
 	a.server.Router().PathPrefix("/auth").Handler(http.StripPrefix("/auth", ab.Config.Core.Router))
 
@@ -67,6 +68,9 @@ func (a *App) Initialize() error {
 
 	communityHandler := webcommunity.New([]byte(a.cfg.Auth.SessionKey), repo)
 	a.server.RegisterHandler(communityHandler)
+
+	// Set up 404 handler for unmatched routes
+	a.server.Router().NotFoundHandler = http.HandlerFunc(weberrors.NotFoundHandler)
 
 	return nil
 }

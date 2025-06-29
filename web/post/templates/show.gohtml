@@ -25,6 +25,10 @@
             
             <h1 class="text-xl font-bold text-gray-900 mb-4">{{.Title}}</h1>
             
+            {{if .Body}}
+            <div class="prose max-w-none mb-4 text-gray-700">{{.Body}}</div>
+            {{end}}
+            
             {{if eq .Role "issue"}}
             <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
                 <div class="flex items-center space-x-2">

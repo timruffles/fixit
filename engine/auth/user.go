@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/aarondl/authboss/v3"
@@ -86,6 +87,7 @@ func (s *Storer) Load(ctx context.Context, key string) (authboss.User, error) {
 	user, err := s.client.User.Query().Where(
 		user2.EmailEQ(key),
 	).Only(ctx)
+	slog.Info("load result", "user", user, "err", err)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, authboss.ErrUserNotFound

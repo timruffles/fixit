@@ -50,7 +50,8 @@ func TestAuthRegisterPage(t *testing.T) {
 }
 
 func TestPostsRenderWithUsernames(t *testing.T) {
-	resp, err := http.Get(testServer.URL + "/")
+	// Check that the community page shows posts with usernames
+	resp, err := http.Get(testServer.URL + "/c/swindon")
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -129,8 +130,8 @@ func TestSignupSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// A successful registration should show the main page, not the registration form
-	isMainPage := strings.Contains(body, "Community Issues") &&
-		strings.Contains(body, "Large pothole on Main Street")
+	isMainPage := strings.Contains(body, "Fix your neighbourhood") &&
+		strings.Contains(body, "Active Communities")
 
 	isRegistrationForm := strings.Contains(body, "Create your account")
 
@@ -172,8 +173,8 @@ func TestLoginSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// A successful login should show the main page, not the login form
-	isMainPage := strings.Contains(body, "Community Issues") &&
-		strings.Contains(body, "Large pothole on Main Street")
+	isMainPage := strings.Contains(body, "Fix your neighbourhood") &&
+		strings.Contains(body, "Active Communities")
 
 	isLoginForm := strings.Contains(body, "Sign in to your account")
 

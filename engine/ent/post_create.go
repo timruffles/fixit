@@ -30,6 +30,20 @@ func (pc *PostCreate) SetTitle(s string) *PostCreate {
 	return pc
 }
 
+// SetBody sets the "body" field.
+func (pc *PostCreate) SetBody(s string) *PostCreate {
+	pc.mutation.SetBody(s)
+	return pc
+}
+
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (pc *PostCreate) SetNillableBody(s *string) *PostCreate {
+	if s != nil {
+		pc.SetBody(*s)
+	}
+	return pc
+}
+
 // SetRole sets the "role" field.
 func (pc *PostCreate) SetRole(po post.Role) *PostCreate {
 	pc.mutation.SetRole(po)
@@ -302,6 +316,10 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
 		_node.Title = value
+	}
+	if value, ok := pc.mutation.Body(); ok {
+		_spec.SetField(post.FieldBody, field.TypeString, value)
+		_node.Body = value
 	}
 	if value, ok := pc.mutation.Role(); ok {
 		_spec.SetField(post.FieldRole, field.TypeEnum, value)

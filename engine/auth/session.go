@@ -12,15 +12,24 @@ type SessionStorer struct {
 }
 
 func NewSessionStorer(key []byte) *SessionStorer {
+	store := sessions.NewCookieStore(key)
+	// Configure session options
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400, // 24 hours
+		HttpOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: http.SameSiteLaxMode,
+	}
 	return &SessionStorer{
-		store: sessions.NewCookieStore(key),
+		store: store,
 	}
 }
 
 var _ authboss.ClientStateReadWriter = (*SessionStorer)(nil)
 
 func (s *SessionStorer) ReadState(r *http.Request) (authboss.ClientState, error) {
-	session, err := s.store.Get(r, "fixit_session")
+	session, err := s.store.Get(r, "authboss-session")
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +44,17 @@ func (s *SessionStorer) ReadState(r *http.Request) (authboss.ClientState, error)
 
 func (s *SessionStorer) WriteState(w http.ResponseWriter, state authboss.ClientState, ev []authboss.ClientStateEvent) error {
 	sessionState := state.(*SessionState)
+	
+	// Apply events to state
+	for _, event := range ev {
+		switch event.Kind {
+		case authboss.ClientStateEventPut:
+			sessionState.Put(event.Key, event.Value)
+		case authboss.ClientStateEventDel:
+			sessionState.Del(event.Key)
+		}
+	}
+	
 	return sessionState.session.Save(sessionState.request, w)
 }
 
@@ -50,6 +70,16 @@ func (s *SessionState) Get(key string) (string, bool) {
 	}
 	str, ok := val.(string)
 	return str, ok
+}
+
+func (s *SessionState) getAllKeys() []string {
+	var keys []string
+	for k := range s.session.Values {
+		if str, ok := k.(string); ok {
+			keys = append(keys, str)
+		}
+	}
+	return keys
 }
 
 func (s *SessionState) Put(key, value string) {

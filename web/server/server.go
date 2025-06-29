@@ -12,6 +12,7 @@ import (
 
 	"fixit/engine/ent"
 	"fixit/engine/ent/migrate"
+	errors2 "fixit/web/errors"
 )
 
 type Handler interface {
@@ -25,6 +26,11 @@ type Server struct {
 
 func New() *Server {
 	r := mux.NewRouter()
+
+	// Add panic recovery middleware first
+	r.Use(errors2.PanicRecoveryMiddleware)
+
+	// Add logging middleware
 	r.Use(func(wrapped http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			m := httpsnoop.CaptureMetrics(wrapped, writer, request)
@@ -38,6 +44,7 @@ func New() *Server {
 			)
 		})
 	})
+
 	return &Server{
 		router: r,
 	}
@@ -66,6 +73,9 @@ func (s *Server) Client() *ent.Client {
 
 func (s *Server) RegisterHandler(handler Handler) {
 	handler.RegisterRoutes(s.router)
+}
+
+func (s *Server) SetupErrorHandling() {
 }
 
 func (s *Server) Start(addr string) error {

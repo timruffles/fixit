@@ -7,6 +7,7 @@ import (
 	_ "github.com/aarondl/authboss/v3/auth"
 	"github.com/aarondl/authboss/v3/defaults"
 	_ "github.com/aarondl/authboss/v3/register"
+	"github.com/gorilla/mux"
 
 	"fixit/engine/ent"
 	webauth "fixit/web/auth"
@@ -23,12 +24,19 @@ type Config struct {
 func Setup(client *ent.Client, cfg Config) (*authboss.Authboss, error) {
 	ab := authboss.New()
 
-	ab.Config.Storage.Server = NewStorer(client)
-	ab.Config.Storage.SessionState = NewSessionStorer([]byte(cfg.SessionKey))
-	ab.Config.Storage.CookieState = NewSessionStorer([]byte(cfg.SessionKey))
+	// Set up defaults first
+	defaults.SetCore(&ab.Config, false, false)
 
+	// Configure storage
+	ab.Config.Storage.Server = NewStorer(client)
+	sessionStorer := NewSessionStorer([]byte(cfg.SessionKey))
+	ab.Config.Storage.SessionState = sessionStorer
+	ab.Config.Storage.CookieState = sessionStorer
+
+	// Configure paths
 	ab.Config.Paths.Mount = "/auth"
 	ab.Config.Paths.AuthLoginOK = "/"
+	
 	ab.Config.Paths.RegisterOK = "/"
 	ab.Config.Paths.RootURL = cfg.RootURL
 
@@ -39,8 +47,6 @@ func Setup(client *ent.Client, cfg Config) (*authboss.Authboss, error) {
 		ab.Config.Core.Mailer = NewMailer(cfg.SendGridKey, cfg.FromName, cfg.FromEmail)
 	}
 
-	defaults.SetCore(&ab.Config, false, false)
-
 	if err := ab.Init(); err != nil {
 		return nil, err
 	}
@@ -48,8 +54,10 @@ func Setup(client *ent.Client, cfg Config) (*authboss.Authboss, error) {
 	return ab, nil
 }
 
-func Middleware(ab *authboss.Authboss) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return ab.LoadClientStateMiddleware(next)
+func Middleware(ab *authboss.Authboss) []mux.MiddlewareFunc {
+	return []mux.MiddlewareFunc{
+		func(next http.Handler) http.Handler {
+			return ab.LoadClientStateMiddleware(next)
+		},
 	}
 }

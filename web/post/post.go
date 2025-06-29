@@ -65,6 +65,7 @@ type CreatePostData struct {
 type ShowPostData struct {
 	ID                  uuid.UUID
 	Title               string
+	Body                string
 	User                *ent.User
 	Community           *ent.Community
 	CreatedAt           time.Time
@@ -156,6 +157,7 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 	// Create post using repository
 	fields := postEngine.PostCreateFields{
 		Title:       title,
+		Body:        body,
 		Role:        post.RoleIssue, // Default to issue for new posts
 		Tags:        tagsList,
 		CommunityID: comm.ID,
@@ -274,6 +276,7 @@ func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 	data := ShowPostData{
 		ID:                  postEntity.ID,
 		Title:               postEntity.Title,
+		Body:                postEntity.Body,
 		User:                postEntity.Edges.User,
 		Community:           postEntity.Edges.Community,
 		CreatedAt:           postEntity.CreatedAt,

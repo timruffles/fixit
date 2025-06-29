@@ -61,6 +61,11 @@ func Title(v string) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldTitle, v))
 }
 
+// Body applies equality check predicate on the "body" field. It's identical to BodyEQ.
+func Body(v string) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldBody, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldCreatedAt, v))
@@ -139,6 +144,81 @@ func TitleEqualFold(v string) predicate.Post {
 // TitleContainsFold applies the ContainsFold predicate on the "title" field.
 func TitleContainsFold(v string) predicate.Post {
 	return predicate.Post(sql.FieldContainsFold(FieldTitle, v))
+}
+
+// BodyEQ applies the EQ predicate on the "body" field.
+func BodyEQ(v string) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldBody, v))
+}
+
+// BodyNEQ applies the NEQ predicate on the "body" field.
+func BodyNEQ(v string) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldBody, v))
+}
+
+// BodyIn applies the In predicate on the "body" field.
+func BodyIn(vs ...string) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldBody, vs...))
+}
+
+// BodyNotIn applies the NotIn predicate on the "body" field.
+func BodyNotIn(vs ...string) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldBody, vs...))
+}
+
+// BodyGT applies the GT predicate on the "body" field.
+func BodyGT(v string) predicate.Post {
+	return predicate.Post(sql.FieldGT(FieldBody, v))
+}
+
+// BodyGTE applies the GTE predicate on the "body" field.
+func BodyGTE(v string) predicate.Post {
+	return predicate.Post(sql.FieldGTE(FieldBody, v))
+}
+
+// BodyLT applies the LT predicate on the "body" field.
+func BodyLT(v string) predicate.Post {
+	return predicate.Post(sql.FieldLT(FieldBody, v))
+}
+
+// BodyLTE applies the LTE predicate on the "body" field.
+func BodyLTE(v string) predicate.Post {
+	return predicate.Post(sql.FieldLTE(FieldBody, v))
+}
+
+// BodyContains applies the Contains predicate on the "body" field.
+func BodyContains(v string) predicate.Post {
+	return predicate.Post(sql.FieldContains(FieldBody, v))
+}
+
+// BodyHasPrefix applies the HasPrefix predicate on the "body" field.
+func BodyHasPrefix(v string) predicate.Post {
+	return predicate.Post(sql.FieldHasPrefix(FieldBody, v))
+}
+
+// BodyHasSuffix applies the HasSuffix predicate on the "body" field.
+func BodyHasSuffix(v string) predicate.Post {
+	return predicate.Post(sql.FieldHasSuffix(FieldBody, v))
+}
+
+// BodyIsNil applies the IsNil predicate on the "body" field.
+func BodyIsNil() predicate.Post {
+	return predicate.Post(sql.FieldIsNull(FieldBody))
+}
+
+// BodyNotNil applies the NotNil predicate on the "body" field.
+func BodyNotNil() predicate.Post {
+	return predicate.Post(sql.FieldNotNull(FieldBody))
+}
+
+// BodyEqualFold applies the EqualFold predicate on the "body" field.
+func BodyEqualFold(v string) predicate.Post {
+	return predicate.Post(sql.FieldEqualFold(FieldBody, v))
+}
+
+// BodyContainsFold applies the ContainsFold predicate on the "body" field.
+func BodyContainsFold(v string) predicate.Post {
+	return predicate.Post(sql.FieldContainsFold(FieldBody, v))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.

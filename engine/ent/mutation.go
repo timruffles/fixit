@@ -757,6 +757,7 @@ type PostMutation struct {
 	typ              string
 	id               *uuid.UUID
 	title            *string
+	body             *string
 	role             *post.Role
 	created_at       *time.Time
 	updated_at       *time.Time
@@ -918,6 +919,55 @@ func (m *PostMutation) OldTitle(ctx context.Context) (v string, err error) {
 // ResetTitle resets all changes to the "title" field.
 func (m *PostMutation) ResetTitle() {
 	m.title = nil
+}
+
+// SetBody sets the "body" field.
+func (m *PostMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *PostMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the Post entity.
+// If the Post object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PostMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ClearBody clears the value of the "body" field.
+func (m *PostMutation) ClearBody() {
+	m.body = nil
+	m.clearedFields[post.FieldBody] = struct{}{}
+}
+
+// BodyCleared returns if the "body" field was cleared in this mutation.
+func (m *PostMutation) BodyCleared() bool {
+	_, ok := m.clearedFields[post.FieldBody]
+	return ok
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *PostMutation) ResetBody() {
+	m.body = nil
+	delete(m.clearedFields, post.FieldBody)
 }
 
 // SetRole sets the "role" field.
@@ -1402,9 +1452,12 @@ func (m *PostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PostMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.title != nil {
 		fields = append(fields, post.FieldTitle)
+	}
+	if m.body != nil {
+		fields = append(fields, post.FieldBody)
 	}
 	if m.role != nil {
 		fields = append(fields, post.FieldRole)
@@ -1431,6 +1484,8 @@ func (m *PostMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case post.FieldTitle:
 		return m.Title()
+	case post.FieldBody:
+		return m.Body()
 	case post.FieldRole:
 		return m.Role()
 	case post.FieldCreatedAt:
@@ -1452,6 +1507,8 @@ func (m *PostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 	switch name {
 	case post.FieldTitle:
 		return m.OldTitle(ctx)
+	case post.FieldBody:
+		return m.OldBody(ctx)
 	case post.FieldRole:
 		return m.OldRole(ctx)
 	case post.FieldCreatedAt:
@@ -1477,6 +1534,13 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTitle(v)
+		return nil
+	case post.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
 		return nil
 	case post.FieldRole:
 		v, ok := value.(post.Role)
@@ -1543,6 +1607,9 @@ func (m *PostMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *PostMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(post.FieldBody) {
+		fields = append(fields, post.FieldBody)
+	}
 	if m.FieldCleared(post.FieldTags) {
 		fields = append(fields, post.FieldTags)
 	}
@@ -1563,6 +1630,9 @@ func (m *PostMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PostMutation) ClearField(name string) error {
 	switch name {
+	case post.FieldBody:
+		m.ClearBody()
+		return nil
 	case post.FieldTags:
 		m.ClearTags()
 		return nil
@@ -1579,6 +1649,9 @@ func (m *PostMutation) ResetField(name string) error {
 	switch name {
 	case post.FieldTitle:
 		m.ResetTitle()
+		return nil
+	case post.FieldBody:
+		m.ResetBody()
 		return nil
 	case post.FieldRole:
 		m.ResetRole()
