@@ -113,6 +113,16 @@ func TestSignupAndCreatePost(t *testing.T) {
 	// Check that our post title appears in the community page
 	assert.Contains(t, body, postTitle)
 	assert.Contains(t, body, username) // The post should show the username
+	
+	// Check that humanized time is being used in the list page
+	hasHumanizedTime := strings.Contains(body, " ago") || 
+		strings.Contains(body, "now") || 
+		strings.Contains(body, "seconds") ||
+		strings.Contains(body, "second ago")
+	assert.True(t, hasHumanizedTime, "List page should contain humanized time format")
+	
+	// Should NOT contain hardcoded "6 hours ago"
+	assert.False(t, strings.Contains(body, "6 hours ago"), "Should not contain hardcoded time")
 
 	// Step 5: Verify we can view the individual post page
 	postPageResp, err := client.Get(testServer.URL + "/p/" + postID)

@@ -6,7 +6,9 @@ import (
 	"embed"
 	"html/template"
 	"net/http"
+	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
@@ -19,14 +21,20 @@ import (
 //go:embed templates/*.gohtml
 var templatesFS embed.FS
 
+var templateFuncs = template.FuncMap{
+	"humanizeTime": func(t time.Time) string {
+		return humanize.Time(t)
+	},
+}
+
 func getTemplates() *template.Template {
 	// In development, parse templates from disk for hot reloading
 	// In production, use embedded templates
-	if templates, err := template.ParseGlob("web/list/templates/*.gohtml"); err == nil {
+	if templates, err := template.New("").Funcs(templateFuncs).ParseGlob("web/list/templates/*.gohtml"); err == nil {
 		return templates
 	}
 	// Fallback to embedded templates
-	return template.Must(template.ParseFS(templatesFS, "templates/*.gohtml"))
+	return template.Must(template.New("").Funcs(templateFuncs).ParseFS(templatesFS, "templates/*.gohtml"))
 }
 
 type Handler struct {

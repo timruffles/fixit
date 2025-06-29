@@ -35,6 +35,8 @@ type Post struct {
 	Tags []string `json:"tags,omitempty"`
 	// ReplyTo holds the value of the "reply_to" field.
 	ReplyTo *uuid.UUID `json:"reply_to,omitempty"`
+	// ImageURL holds the value of the "image_url" field.
+	ImageURL string `json:"image_url,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PostQuery when eager-loading is set.
 	Edges          PostEdges `json:"edges"`
@@ -120,7 +122,7 @@ func (*Post) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case post.FieldTags:
 			values[i] = new([]byte)
-		case post.FieldTitle, post.FieldBody, post.FieldRole:
+		case post.FieldTitle, post.FieldBody, post.FieldRole, post.FieldImageURL:
 			values[i] = new(sql.NullString)
 		case post.FieldCreatedAt, post.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -195,6 +197,12 @@ func (po *Post) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				po.ReplyTo = new(uuid.UUID)
 				*po.ReplyTo = *value.S.(*uuid.UUID)
+			}
+		case post.FieldImageURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field image_url", values[i])
+			} else if value.Valid {
+				po.ImageURL = value.String
 			}
 		case post.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -293,6 +301,9 @@ func (po *Post) String() string {
 		builder.WriteString("reply_to=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("image_url=")
+	builder.WriteString(po.ImageURL)
 	builder.WriteByte(')')
 	return builder.String()
 }

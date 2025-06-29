@@ -125,6 +125,26 @@ func (pu *PostUpdate) ClearReplyTo() *PostUpdate {
 	return pu
 }
 
+// SetImageURL sets the "image_url" field.
+func (pu *PostUpdate) SetImageURL(s string) *PostUpdate {
+	pu.mutation.SetImageURL(s)
+	return pu
+}
+
+// SetNillableImageURL sets the "image_url" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableImageURL(s *string) *PostUpdate {
+	if s != nil {
+		pu.SetImageURL(*s)
+	}
+	return pu
+}
+
+// ClearImageURL clears the value of the "image_url" field.
+func (pu *PostUpdate) ClearImageURL() *PostUpdate {
+	pu.mutation.ClearImageURL()
+	return pu
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (pu *PostUpdate) SetUserID(id uuid.UUID) *PostUpdate {
 	pu.mutation.SetUserID(id)
@@ -355,6 +375,12 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.TagsCleared() {
 		_spec.ClearField(post.FieldTags, field.TypeJSON)
+	}
+	if value, ok := pu.mutation.ImageURL(); ok {
+		_spec.SetField(post.FieldImageURL, field.TypeString, value)
+	}
+	if pu.mutation.ImageURLCleared() {
+		_spec.ClearField(post.FieldImageURL, field.TypeString)
 	}
 	if pu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -645,6 +671,26 @@ func (puo *PostUpdateOne) ClearReplyTo() *PostUpdateOne {
 	return puo
 }
 
+// SetImageURL sets the "image_url" field.
+func (puo *PostUpdateOne) SetImageURL(s string) *PostUpdateOne {
+	puo.mutation.SetImageURL(s)
+	return puo
+}
+
+// SetNillableImageURL sets the "image_url" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableImageURL(s *string) *PostUpdateOne {
+	if s != nil {
+		puo.SetImageURL(*s)
+	}
+	return puo
+}
+
+// ClearImageURL clears the value of the "image_url" field.
+func (puo *PostUpdateOne) ClearImageURL() *PostUpdateOne {
+	puo.mutation.ClearImageURL()
+	return puo
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (puo *PostUpdateOne) SetUserID(id uuid.UUID) *PostUpdateOne {
 	puo.mutation.SetUserID(id)
@@ -905,6 +951,12 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	}
 	if puo.mutation.TagsCleared() {
 		_spec.ClearField(post.FieldTags, field.TypeJSON)
+	}
+	if value, ok := puo.mutation.ImageURL(); ok {
+		_spec.SetField(post.FieldImageURL, field.TypeString, value)
+	}
+	if puo.mutation.ImageURLCleared() {
+		_spec.ClearField(post.FieldImageURL, field.TypeString)
 	}
 	if puo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -35,6 +35,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "tags", Type: field.TypeJSON, Nullable: true},
+		{Name: "image_url", Type: field.TypeString, Nullable: true},
 		{Name: "post_user", Type: field.TypeUUID},
 		{Name: "post_community", Type: field.TypeUUID},
 		{Name: "reply_to", Type: field.TypeUUID, Nullable: true},
@@ -47,19 +48,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "post_user_user",
-				Columns:    []*schema.Column{PostColumns[7]},
+				Columns:    []*schema.Column{PostColumns[8]},
 				RefColumns: []*schema.Column{UserColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "post_community_community",
-				Columns:    []*schema.Column{PostColumns[8]},
+				Columns:    []*schema.Column{PostColumns[9]},
 				RefColumns: []*schema.Column{CommunityColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "post_post_parent",
-				Columns:    []*schema.Column{PostColumns[9]},
+				Columns:    []*schema.Column{PostColumns[10]},
 				RefColumns: []*schema.Column{PostColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

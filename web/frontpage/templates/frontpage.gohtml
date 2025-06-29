@@ -51,7 +51,7 @@
                     {{end}}
                     
                     <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
-                        <span>Active since {{.CreatedAt.Format "Jan 2006"}}</span>
+                        <span>Active since {{humanizeTime .CreatedAt}}</span>
                     </div>
                     
                     <div class="border-t pt-4">

@@ -30,6 +30,8 @@ const (
 	FieldTags = "tags"
 	// FieldReplyTo holds the string denoting the reply_to field in the database.
 	FieldReplyTo = "reply_to"
+	// FieldImageURL holds the string denoting the image_url field in the database.
+	FieldImageURL = "image_url"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// EdgeCommunity holds the string denoting the community edge name in mutations.
@@ -83,6 +85,7 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldTags,
 	FieldReplyTo,
+	FieldImageURL,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "post"
@@ -186,6 +189,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByReplyTo orders the results by the reply_to field.
 func ByReplyTo(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReplyTo, opts...).ToFunc()
+}
+
+// ByImageURL orders the results by the image_url field.
+func ByImageURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldImageURL, opts...).ToFunc()
 }
 
 // ByUserField orders the results by user field.

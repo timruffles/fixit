@@ -81,6 +81,11 @@ func ReplyTo(v uuid.UUID) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldReplyTo, v))
 }
 
+// ImageURL applies equality check predicate on the "image_url" field. It's identical to ImageURLEQ.
+func ImageURL(v string) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldImageURL, v))
+}
+
 // TitleEQ applies the EQ predicate on the "title" field.
 func TitleEQ(v string) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldTitle, v))
@@ -359,6 +364,81 @@ func ReplyToIsNil() predicate.Post {
 // ReplyToNotNil applies the NotNil predicate on the "reply_to" field.
 func ReplyToNotNil() predicate.Post {
 	return predicate.Post(sql.FieldNotNull(FieldReplyTo))
+}
+
+// ImageURLEQ applies the EQ predicate on the "image_url" field.
+func ImageURLEQ(v string) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldImageURL, v))
+}
+
+// ImageURLNEQ applies the NEQ predicate on the "image_url" field.
+func ImageURLNEQ(v string) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldImageURL, v))
+}
+
+// ImageURLIn applies the In predicate on the "image_url" field.
+func ImageURLIn(vs ...string) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldImageURL, vs...))
+}
+
+// ImageURLNotIn applies the NotIn predicate on the "image_url" field.
+func ImageURLNotIn(vs ...string) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldImageURL, vs...))
+}
+
+// ImageURLGT applies the GT predicate on the "image_url" field.
+func ImageURLGT(v string) predicate.Post {
+	return predicate.Post(sql.FieldGT(FieldImageURL, v))
+}
+
+// ImageURLGTE applies the GTE predicate on the "image_url" field.
+func ImageURLGTE(v string) predicate.Post {
+	return predicate.Post(sql.FieldGTE(FieldImageURL, v))
+}
+
+// ImageURLLT applies the LT predicate on the "image_url" field.
+func ImageURLLT(v string) predicate.Post {
+	return predicate.Post(sql.FieldLT(FieldImageURL, v))
+}
+
+// ImageURLLTE applies the LTE predicate on the "image_url" field.
+func ImageURLLTE(v string) predicate.Post {
+	return predicate.Post(sql.FieldLTE(FieldImageURL, v))
+}
+
+// ImageURLContains applies the Contains predicate on the "image_url" field.
+func ImageURLContains(v string) predicate.Post {
+	return predicate.Post(sql.FieldContains(FieldImageURL, v))
+}
+
+// ImageURLHasPrefix applies the HasPrefix predicate on the "image_url" field.
+func ImageURLHasPrefix(v string) predicate.Post {
+	return predicate.Post(sql.FieldHasPrefix(FieldImageURL, v))
+}
+
+// ImageURLHasSuffix applies the HasSuffix predicate on the "image_url" field.
+func ImageURLHasSuffix(v string) predicate.Post {
+	return predicate.Post(sql.FieldHasSuffix(FieldImageURL, v))
+}
+
+// ImageURLIsNil applies the IsNil predicate on the "image_url" field.
+func ImageURLIsNil() predicate.Post {
+	return predicate.Post(sql.FieldIsNull(FieldImageURL))
+}
+
+// ImageURLNotNil applies the NotNil predicate on the "image_url" field.
+func ImageURLNotNil() predicate.Post {
+	return predicate.Post(sql.FieldNotNull(FieldImageURL))
+}
+
+// ImageURLEqualFold applies the EqualFold predicate on the "image_url" field.
+func ImageURLEqualFold(v string) predicate.Post {
+	return predicate.Post(sql.FieldEqualFold(FieldImageURL, v))
+}
+
+// ImageURLContainsFold applies the ContainsFold predicate on the "image_url" field.
+func ImageURLContainsFold(v string) predicate.Post {
+	return predicate.Post(sql.FieldContainsFold(FieldImageURL, v))
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.

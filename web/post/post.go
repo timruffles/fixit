@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aarondl/authboss/v3"
+	"github.com/dustin/go-humanize"
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -44,6 +45,9 @@ var templateFuncs = template.FuncMap{
 		}
 		return s[start:end]
 	},
+	"humanizeTime": func(t time.Time) string {
+		return humanize.Time(t)
+	},
 }
 
 var createTpl = template.Must(template.New("create").Funcs(templateFuncs).Parse(createTplS))
@@ -58,6 +62,7 @@ type CreatePostData struct {
 	Title       string
 	Body        string
 	Tags        string
+	ImageURL    string
 	Error       string
 	CommunityID string
 	ReplyToID   string
@@ -68,6 +73,7 @@ type ShowPostData struct {
 	ID                  uuid.UUID
 	Title               string
 	Body                string
+	ImageURL            string
 	User                *ent.User
 	Community           *ent.Community
 	CreatedAt           time.Time
@@ -87,6 +93,7 @@ type PostReply struct {
 	IsAccepted        bool
 	HasVerifications  bool
 	VerificationCount int
+	Verifications     []*PostReply
 }
 
 func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, error) {
@@ -97,6 +104,7 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 	tags := r.FormValue("tags")
+	imageURL := r.FormValue("image_url")
 	communitySlug := r.FormValue("community")
 	replyToID := r.FormValue("reply_to_id")
 	postType := r.FormValue("post_type")
@@ -105,6 +113,7 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 		Title:       title,
 		Body:        body,
 		Tags:        tags,
+		ImageURL:    imageURL,
 		CommunityID: communitySlug,
 		ReplyToID:   replyToID,
 		PostType:    postType,
@@ -193,6 +202,7 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 		Tags:        tagsList,
 		CommunityID: comm.ID,
 		ReplyTo:     replyToUUID,
+		ImageURL:    imageURL,
 	}
 
 	createdPost, err := h.postRepo.Create(ctx, fields, user.User)
@@ -247,7 +257,10 @@ func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error
 	replyToID := r.URL.Query().Get("reply_to_id")
 	postType := r.URL.Query().Get("post_type")
 
+	title := "Post and issue"
+
 	data := CreatePostData{
+		Title:       title,
 		CommunityID: communityID,
 		ReplyToID:   replyToID,
 		PostType:    postType,
@@ -259,7 +272,6 @@ func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error
 	}
 	return handler.Ok(content), nil
 }
-
 
 func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 	vars := mux.Vars(r)
@@ -291,10 +303,26 @@ func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 
 		switch reply.Role {
 		case "solution":
-			// TODO: Check if this solution is accepted and count verifications
-			replyData.IsAccepted = false       // TODO: implement acceptance logic
-			replyData.HasVerifications = false // TODO: count verification replies
-			replyData.VerificationCount = 0    // TODO: count verification replies
+			// Process verifications for this solution
+			var verifications []*PostReply
+			for _, verification := range reply.Edges.Replies {
+				if verification.Role == "verification" {
+					verificationData := &PostReply{
+						ID:        verification.ID,
+						Title:     verification.Title,
+						User:      verification.Edges.User,
+						CreatedAt: verification.CreatedAt,
+						Role:      string(verification.Role),
+					}
+					verifications = append(verifications, verificationData)
+				}
+			}
+
+			replyData.Verifications = verifications
+			replyData.VerificationCount = len(verifications)
+			replyData.HasVerifications = len(verifications) > 0
+			replyData.IsAccepted = false // TODO: implement acceptance logic
+
 			if replyData.IsAccepted {
 				hasAcceptedSolution = true
 			}

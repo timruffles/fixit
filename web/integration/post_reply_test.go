@@ -203,6 +203,25 @@ func TestPostReplyFunctionality(t *testing.T) {
 	// Check that the "Reply" link is present for chat
 	expectedReplyURL := "/c/" + communityName + "/post?reply_to_id=" + issuePostID + "&post_type=chat"
 	assert.Contains(t, issuePageBody, expectedReplyURL)
+	
+	// Check that the verification appears under the solution
+	assert.Contains(t, issuePageBody, verificationTitle)
+	assert.Contains(t, issuePageBody, "✓ Verified")
+	assert.Contains(t, issuePageBody, "Verifications")
+	
+	// Check that humanized time is being used (should contain "ago", "now", or other relative terms)
+	hasHumanizedTime := strings.Contains(issuePageBody, " ago") || 
+		strings.Contains(issuePageBody, "now") || 
+		strings.Contains(issuePageBody, "seconds") ||
+		strings.Contains(issuePageBody, "minutes") ||
+		strings.Contains(issuePageBody, "hours") ||
+		strings.Contains(issuePageBody, "second ago") ||
+		strings.Contains(issuePageBody, "minute ago")
+	
+	assert.True(t, hasHumanizedTime, "Page should contain humanized time format (e.g., '5 minutes ago')")
+	
+	// Should NOT contain the old absolute date format
+	assert.False(t, strings.Contains(issuePageBody, "2006"), "Should not contain absolute date format")
 }
 
 func TestPostReplyGetHandler(t *testing.T) {

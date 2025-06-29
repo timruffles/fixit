@@ -33,6 +33,7 @@ type PostCreateFields struct {
 	ReplyTo     *uuid.UUID `json:"replyTo,omitempty"`
 	UserEmail   string     `json:"userEmail,omitempty"`
 	CommunityID uuid.UUID  `json:"communityID,omitempty"`
+	ImageURL    string     `json:"imageURL,omitempty"`
 }
 
 func (r *Repository) Create(ctx context.Context, fields PostCreateFields, user *ent.User) (*ent.Post, error) {
@@ -45,6 +46,7 @@ func (r *Repository) Create(ctx context.Context, fields PostCreateFields, user *
 		ReplyTo:     fields.ReplyTo,
 		UserEmail:   fields.UserEmail,
 		CommunityID: fields.CommunityID,
+		ImageURL:    fields.ImageURL,
 	}
 
 	// Validate role-specific requirements
@@ -70,6 +72,10 @@ func (r *Repository) Create(ctx context.Context, fields PostCreateFields, user *
 		builder.SetReplyTo(*fields.ReplyTo)
 	}
 
+	if fields.ImageURL != "" {
+		builder.SetImageURL(fields.ImageURL)
+	}
+
 	post, err := builder.Save(ctx)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -84,7 +90,11 @@ func (r *Repository) GetByIDWithReplies(ctx context.Context, id uuid.UUID) (*ent
 		WithUser().
 		WithCommunity().
 		WithReplies(func(q *ent.PostQuery) {
-			q.WithUser().Order(ent.Asc(post.FieldCreatedAt))
+			q.WithUser().
+				WithReplies(func(nestedQ *ent.PostQuery) {
+					nestedQ.WithUser().Order(ent.Desc(post.FieldCreatedAt))
+				}).
+				Order(ent.Desc(post.FieldCreatedAt))
 		}).
 		Only(ctx)
 	if err != nil {

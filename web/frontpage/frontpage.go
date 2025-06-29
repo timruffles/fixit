@@ -7,7 +7,9 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
@@ -31,6 +33,9 @@ var templateFuncs = template.FuncMap{
 			end = len(s)
 		}
 		return s[start:end]
+	},
+	"humanizeTime": func(t time.Time) string {
+		return humanize.Time(t)
 	},
 }
 

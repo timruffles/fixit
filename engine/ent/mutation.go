@@ -763,6 +763,7 @@ type PostMutation struct {
 	updated_at       *time.Time
 	tags             *[]string
 	appendtags       []string
+	image_url        *string
 	clearedFields    map[string]struct{}
 	user             *uuid.UUID
 	cleareduser      bool
@@ -1192,6 +1193,55 @@ func (m *PostMutation) ResetReplyTo() {
 	delete(m.clearedFields, post.FieldReplyTo)
 }
 
+// SetImageURL sets the "image_url" field.
+func (m *PostMutation) SetImageURL(s string) {
+	m.image_url = &s
+}
+
+// ImageURL returns the value of the "image_url" field in the mutation.
+func (m *PostMutation) ImageURL() (r string, exists bool) {
+	v := m.image_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImageURL returns the old "image_url" field's value of the Post entity.
+// If the Post object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PostMutation) OldImageURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImageURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImageURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImageURL: %w", err)
+	}
+	return oldValue.ImageURL, nil
+}
+
+// ClearImageURL clears the value of the "image_url" field.
+func (m *PostMutation) ClearImageURL() {
+	m.image_url = nil
+	m.clearedFields[post.FieldImageURL] = struct{}{}
+}
+
+// ImageURLCleared returns if the "image_url" field was cleared in this mutation.
+func (m *PostMutation) ImageURLCleared() bool {
+	_, ok := m.clearedFields[post.FieldImageURL]
+	return ok
+}
+
+// ResetImageURL resets all changes to the "image_url" field.
+func (m *PostMutation) ResetImageURL() {
+	m.image_url = nil
+	delete(m.clearedFields, post.FieldImageURL)
+}
+
 // SetUserID sets the "user" edge to the User entity by id.
 func (m *PostMutation) SetUserID(id uuid.UUID) {
 	m.user = &id
@@ -1452,7 +1502,7 @@ func (m *PostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PostMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.title != nil {
 		fields = append(fields, post.FieldTitle)
 	}
@@ -1473,6 +1523,9 @@ func (m *PostMutation) Fields() []string {
 	}
 	if m.parent != nil {
 		fields = append(fields, post.FieldReplyTo)
+	}
+	if m.image_url != nil {
+		fields = append(fields, post.FieldImageURL)
 	}
 	return fields
 }
@@ -1496,6 +1549,8 @@ func (m *PostMutation) Field(name string) (ent.Value, bool) {
 		return m.Tags()
 	case post.FieldReplyTo:
 		return m.ReplyTo()
+	case post.FieldImageURL:
+		return m.ImageURL()
 	}
 	return nil, false
 }
@@ -1519,6 +1574,8 @@ func (m *PostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldTags(ctx)
 	case post.FieldReplyTo:
 		return m.OldReplyTo(ctx)
+	case post.FieldImageURL:
+		return m.OldImageURL(ctx)
 	}
 	return nil, fmt.Errorf("unknown Post field %s", name)
 }
@@ -1577,6 +1634,13 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetReplyTo(v)
 		return nil
+	case post.FieldImageURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImageURL(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Post field %s", name)
 }
@@ -1616,6 +1680,9 @@ func (m *PostMutation) ClearedFields() []string {
 	if m.FieldCleared(post.FieldReplyTo) {
 		fields = append(fields, post.FieldReplyTo)
 	}
+	if m.FieldCleared(post.FieldImageURL) {
+		fields = append(fields, post.FieldImageURL)
+	}
 	return fields
 }
 
@@ -1638,6 +1705,9 @@ func (m *PostMutation) ClearField(name string) error {
 		return nil
 	case post.FieldReplyTo:
 		m.ClearReplyTo()
+		return nil
+	case post.FieldImageURL:
+		m.ClearImageURL()
 		return nil
 	}
 	return fmt.Errorf("unknown Post nullable field %s", name)
@@ -1667,6 +1737,9 @@ func (m *PostMutation) ResetField(name string) error {
 		return nil
 	case post.FieldReplyTo:
 		m.ResetReplyTo()
+		return nil
+	case post.FieldImageURL:
+		m.ResetImageURL()
 		return nil
 	}
 	return fmt.Errorf("unknown Post field %s", name)

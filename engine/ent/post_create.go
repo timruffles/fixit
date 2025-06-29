@@ -106,6 +106,20 @@ func (pc *PostCreate) SetNillableReplyTo(u *uuid.UUID) *PostCreate {
 	return pc
 }
 
+// SetImageURL sets the "image_url" field.
+func (pc *PostCreate) SetImageURL(s string) *PostCreate {
+	pc.mutation.SetImageURL(s)
+	return pc
+}
+
+// SetNillableImageURL sets the "image_url" field if the given value is not nil.
+func (pc *PostCreate) SetNillableImageURL(s *string) *PostCreate {
+	if s != nil {
+		pc.SetImageURL(*s)
+	}
+	return pc
+}
+
 // SetID sets the "id" field.
 func (pc *PostCreate) SetID(u uuid.UUID) *PostCreate {
 	pc.mutation.SetID(u)
@@ -336,6 +350,10 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Tags(); ok {
 		_spec.SetField(post.FieldTags, field.TypeJSON, value)
 		_node.Tags = value
+	}
+	if value, ok := pc.mutation.ImageURL(); ok {
+		_spec.SetField(post.FieldImageURL, field.TypeString, value)
+		_node.ImageURL = value
 	}
 	if nodes := pc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -17,7 +17,7 @@ func TestUserCanSolveOwnIssueButNotVerifyOwnSolution(t *testing.T) {
 	// Create a client with cookie jar to maintain session across requests
 	jar, err := cookiejar.New(nil)
 	require.NoError(t, err)
-	
+
 	client := &http.Client{
 		// Don't follow redirects automatically so we can check them
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -78,7 +78,7 @@ func TestUserCanSolveOwnIssueButNotVerifyOwnSolution(t *testing.T) {
 	// Should redirect to community page with post ID
 	assert.Equal(t, http.StatusFound, issueResp.StatusCode)
 	issueLocation := issueResp.Header.Get("Location")
-	
+
 	// Extract the issue post ID from the redirect URL
 	parts := strings.Split(issueLocation, "posted_id=")
 	require.Len(t, parts, 2)
@@ -103,7 +103,7 @@ func TestUserCanSolveOwnIssueButNotVerifyOwnSolution(t *testing.T) {
 	// Should redirect to community page with solution post ID
 	assert.Equal(t, http.StatusFound, solutionResp.StatusCode)
 	solutionLocation := solutionResp.Header.Get("Location")
-	
+
 	// Extract the solution post ID from the redirect URL
 	solutionParts := strings.Split(solutionLocation, "posted_id=")
 	require.Len(t, solutionParts, 2)
@@ -127,8 +127,8 @@ func TestUserCanSolveOwnIssueButNotVerifyOwnSolution(t *testing.T) {
 
 	// Should return 400 Bad Request because users can't verify their own solutions
 	assert.Equal(t, http.StatusBadRequest, verificationResp.StatusCode)
-	
+
 	// Check that the error message is about not being able to verify own solutions
 	verificationBody := readResponseBody(t, verificationResp)
-	assert.Contains(t, verificationBody, "users cannot reply to their own posts with verification role")
+	assert.Contains(t, verificationBody, "Sorry - you can't verify your own solution. Wait till someone notices your good deed")
 }

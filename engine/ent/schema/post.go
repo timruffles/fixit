@@ -51,6 +51,8 @@ func (Post) Fields() []ent.Field {
 		field.UUID("reply_to", uuid.UUID{}).
 			Nillable().
 			Optional(),
+		field.String("image_url").
+			Optional(),
 	}
 }
 
