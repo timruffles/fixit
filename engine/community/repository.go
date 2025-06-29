@@ -10,6 +10,14 @@ import (
 	"fixit/engine/ent/post"
 )
 
+type CommunityCreateFields struct {
+	Name           string `json:"name,omitempty"`
+	Title          string `json:"title,omitempty"`
+	Location       string `json:"location,omitempty"`
+	BannerImageURL string `json:"bannerImageURL,omitempty"`
+	Geography      string `json:"geography,omitempty"`
+}
+
 type Filter struct {
 	Location string
 }
@@ -17,6 +25,7 @@ type Filter struct {
 type PostListItem struct {
 	*ent.Post
 	Username string
+	Solved   bool
 }
 
 type Repository struct {
@@ -27,6 +36,41 @@ func NewRepository(client *ent.Client) *Repository {
 	return &Repository{
 		client: client,
 	}
+}
+
+func (r *Repository) Create(ctx context.Context, fields CommunityCreateFields) (*ent.Community, error) {
+	builder := r.client.Community.Create().
+		SetName(fields.Name).
+		SetTitle(fields.Title)
+
+	if fields.Location != "" {
+		builder.SetLocation(fields.Location)
+	}
+
+	if fields.BannerImageURL != "" {
+		builder.SetBannerImageURL(fields.BannerImageURL)
+	}
+
+	if fields.Geography != "" {
+		builder.SetGeography(fields.Geography)
+	}
+
+	community, err := builder.Save(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return community, nil
+}
+
+func (r *Repository) GetBySlug(ctx context.Context, slug string) (*ent.Community, error) {
+	comm, err := r.client.Community.Query().
+		Where(community.NameEQ(slug)).
+		Only(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return comm, nil
 }
 
 func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter *Filter) ([]PostListItem, error) {
@@ -48,10 +92,25 @@ func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter
 	}
 
 	var items []PostListItem
-	for _, post := range posts {
+	for _, p := range posts {
+		// Check if p has solution replies to determine if it's solved
+		solved := false
+		if p.Role == post.RoleIssue {
+			solutionCount, err := r.client.Post.Query().
+				Where(
+					post.RoleEQ(post.RoleSolution),
+					post.ReplyToEQ(p.ID),
+				).
+				Count(ctx)
+			if err == nil && solutionCount > 0 {
+				solved = true
+			}
+		}
+
 		item := PostListItem{
-			Post:     post,
-			Username: post.Edges.User.Username,
+			Post:     p,
+			Username: p.Edges.User.Username,
+			Solved:   solved,
 		}
 		items = append(items, item)
 	}

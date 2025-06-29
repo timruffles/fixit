@@ -18,7 +18,16 @@ import (
 
 //go:embed templates/*.gohtml
 var templatesFS embed.FS
-var templates = template.Must(template.ParseFS(templatesFS, "templates/*.gohtml"))
+
+func getTemplates() *template.Template {
+	// In development, parse templates from disk for hot reloading
+	// In production, use embedded templates
+	if templates, err := template.ParseGlob("web/list/templates/*.gohtml"); err == nil {
+		return templates
+	}
+	// Fallback to embedded templates
+	return template.Must(template.ParseFS(templatesFS, "templates/*.gohtml"))
+}
 
 type Handler struct {
 	repo *community.Repository
@@ -50,19 +59,25 @@ func (h *Handler) handleList(req *http.Request) (handler.Response, error) {
 	filter := &community.Filter{}
 
 	vars := mux.Vars(req)
-	communityID := vars["slug"]
+	communitySlug := vars["slug"]
 
-	postItems, err := h.repo.ListPosts(ctx, communityID, filter)
+	// Get community data
+	comm, err := h.repo.GetBySlug(ctx, communitySlug)
+	if err != nil {
+		return nil, err
+	}
+
+	postItems, err := h.repo.ListPosts(ctx, communitySlug, filter)
 	if err != nil {
 		return nil, err
 	}
 
 	data := struct {
-		Title string
-		Posts []community.PostListItem
+		Community *ent.Community
+		Posts     []community.PostListItem
 	}{
-		Title: "Community Issues",
-		Posts: postItems,
+		Community: comm,
+		Posts:     postItems,
 	}
 
 	content, err := templatesExecute("list.gohtml", data)
@@ -71,7 +86,7 @@ func (h *Handler) handleList(req *http.Request) (handler.Response, error) {
 	}
 
 	html, err := layouts.WithGeneral(layouts.LayoutData{
-		Title:   "Community Issues",
+		Title:   comm.Title,
 		Content: template.HTML(content),
 	})
 	if err != nil {
@@ -83,6 +98,7 @@ func (h *Handler) handleList(req *http.Request) (handler.Response, error) {
 
 func templatesExecute(name string, data any) ([]byte, error) {
 	var buf bytes.Buffer
+	templates := getTemplates()
 	if err := templates.ExecuteTemplate(&buf, name, data); err != nil {
 		return nil, errors.WithStack(err)
 	}

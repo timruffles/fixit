@@ -1,3 +1,6 @@
+# fixit
+
+Community software for fixing things.
 
 # Dependencies
 

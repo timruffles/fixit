@@ -37,18 +37,20 @@ const (
 // CommunityMutation represents an operation that mutates the Community nodes in the graph.
 type CommunityMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	name          *string
-	title         *string
-	location      *string
-	created_at    *time.Time
-	updated_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Community, error)
-	predicates    []predicate.Community
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	name             *string
+	title            *string
+	location         *string
+	banner_image_url *string
+	geography        *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Community, error)
+	predicates       []predicate.Community
 }
 
 var _ ent.Mutation = (*CommunityMutation)(nil)
@@ -276,6 +278,104 @@ func (m *CommunityMutation) ResetLocation() {
 	delete(m.clearedFields, community.FieldLocation)
 }
 
+// SetBannerImageURL sets the "banner_image_url" field.
+func (m *CommunityMutation) SetBannerImageURL(s string) {
+	m.banner_image_url = &s
+}
+
+// BannerImageURL returns the value of the "banner_image_url" field in the mutation.
+func (m *CommunityMutation) BannerImageURL() (r string, exists bool) {
+	v := m.banner_image_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBannerImageURL returns the old "banner_image_url" field's value of the Community entity.
+// If the Community object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommunityMutation) OldBannerImageURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBannerImageURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBannerImageURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBannerImageURL: %w", err)
+	}
+	return oldValue.BannerImageURL, nil
+}
+
+// ClearBannerImageURL clears the value of the "banner_image_url" field.
+func (m *CommunityMutation) ClearBannerImageURL() {
+	m.banner_image_url = nil
+	m.clearedFields[community.FieldBannerImageURL] = struct{}{}
+}
+
+// BannerImageURLCleared returns if the "banner_image_url" field was cleared in this mutation.
+func (m *CommunityMutation) BannerImageURLCleared() bool {
+	_, ok := m.clearedFields[community.FieldBannerImageURL]
+	return ok
+}
+
+// ResetBannerImageURL resets all changes to the "banner_image_url" field.
+func (m *CommunityMutation) ResetBannerImageURL() {
+	m.banner_image_url = nil
+	delete(m.clearedFields, community.FieldBannerImageURL)
+}
+
+// SetGeography sets the "geography" field.
+func (m *CommunityMutation) SetGeography(s string) {
+	m.geography = &s
+}
+
+// Geography returns the value of the "geography" field in the mutation.
+func (m *CommunityMutation) Geography() (r string, exists bool) {
+	v := m.geography
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGeography returns the old "geography" field's value of the Community entity.
+// If the Community object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommunityMutation) OldGeography(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGeography is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGeography requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGeography: %w", err)
+	}
+	return oldValue.Geography, nil
+}
+
+// ClearGeography clears the value of the "geography" field.
+func (m *CommunityMutation) ClearGeography() {
+	m.geography = nil
+	m.clearedFields[community.FieldGeography] = struct{}{}
+}
+
+// GeographyCleared returns if the "geography" field was cleared in this mutation.
+func (m *CommunityMutation) GeographyCleared() bool {
+	_, ok := m.clearedFields[community.FieldGeography]
+	return ok
+}
+
+// ResetGeography resets all changes to the "geography" field.
+func (m *CommunityMutation) ResetGeography() {
+	m.geography = nil
+	delete(m.clearedFields, community.FieldGeography)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *CommunityMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -382,7 +482,7 @@ func (m *CommunityMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CommunityMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, community.FieldName)
 	}
@@ -391,6 +491,12 @@ func (m *CommunityMutation) Fields() []string {
 	}
 	if m.location != nil {
 		fields = append(fields, community.FieldLocation)
+	}
+	if m.banner_image_url != nil {
+		fields = append(fields, community.FieldBannerImageURL)
+	}
+	if m.geography != nil {
+		fields = append(fields, community.FieldGeography)
 	}
 	if m.created_at != nil {
 		fields = append(fields, community.FieldCreatedAt)
@@ -412,6 +518,10 @@ func (m *CommunityMutation) Field(name string) (ent.Value, bool) {
 		return m.Title()
 	case community.FieldLocation:
 		return m.Location()
+	case community.FieldBannerImageURL:
+		return m.BannerImageURL()
+	case community.FieldGeography:
+		return m.Geography()
 	case community.FieldCreatedAt:
 		return m.CreatedAt()
 	case community.FieldUpdatedAt:
@@ -431,6 +541,10 @@ func (m *CommunityMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldTitle(ctx)
 	case community.FieldLocation:
 		return m.OldLocation(ctx)
+	case community.FieldBannerImageURL:
+		return m.OldBannerImageURL(ctx)
+	case community.FieldGeography:
+		return m.OldGeography(ctx)
 	case community.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case community.FieldUpdatedAt:
@@ -464,6 +578,20 @@ func (m *CommunityMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLocation(v)
+		return nil
+	case community.FieldBannerImageURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBannerImageURL(v)
+		return nil
+	case community.FieldGeography:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGeography(v)
 		return nil
 	case community.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -512,6 +640,12 @@ func (m *CommunityMutation) ClearedFields() []string {
 	if m.FieldCleared(community.FieldLocation) {
 		fields = append(fields, community.FieldLocation)
 	}
+	if m.FieldCleared(community.FieldBannerImageURL) {
+		fields = append(fields, community.FieldBannerImageURL)
+	}
+	if m.FieldCleared(community.FieldGeography) {
+		fields = append(fields, community.FieldGeography)
+	}
 	return fields
 }
 
@@ -529,6 +663,12 @@ func (m *CommunityMutation) ClearField(name string) error {
 	case community.FieldLocation:
 		m.ClearLocation()
 		return nil
+	case community.FieldBannerImageURL:
+		m.ClearBannerImageURL()
+		return nil
+	case community.FieldGeography:
+		m.ClearGeography()
+		return nil
 	}
 	return fmt.Errorf("unknown Community nullable field %s", name)
 }
@@ -545,6 +685,12 @@ func (m *CommunityMutation) ResetField(name string) error {
 		return nil
 	case community.FieldLocation:
 		m.ResetLocation()
+		return nil
+	case community.FieldBannerImageURL:
+		m.ResetBannerImageURL()
+		return nil
+	case community.FieldGeography:
+		m.ResetGeography()
 		return nil
 	case community.FieldCreatedAt:
 		m.ResetCreatedAt()

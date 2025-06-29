@@ -6,6 +6,7 @@ import (
 
 	"github.com/aarondl/authboss/v3"
 	"github.com/gofrs/uuid/v5"
+	"github.com/pkg/errors"
 
 	"fixit/engine/ent"
 	user2 "fixit/engine/ent/user"
@@ -109,13 +110,13 @@ func (s *Storer) Save(ctx context.Context, user authboss.User) error {
 				username = "user" + u.Email[:5] // Fallback
 			}
 		}
-		
+
 		_, err := s.client.User.Create().
 			SetUsername(username).
 			SetEmail(u.Email).
 			SetPassword(u.Password).
 			Save(ctx)
-		return err
+		return errors.WithStack(err)
 	}
 
 	_, err := s.client.User.UpdateOneID(u.ID).
@@ -123,7 +124,7 @@ func (s *Storer) Save(ctx context.Context, user authboss.User) error {
 		SetEmail(u.Email).
 		SetPassword(u.Password).
 		Save(ctx)
-	return err
+	return errors.WithStack(err)
 }
 
 func (s *Storer) New(ctx context.Context) authboss.User {

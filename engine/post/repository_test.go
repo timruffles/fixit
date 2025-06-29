@@ -35,9 +35,8 @@ func TestRepository_CreatePostGraph(t *testing.T) {
 		Title:       "Test Issue Post",
 		Role:        entPost.RoleIssue,
 		Tags:        []string{"issue", "test"},
-		UserID:      issueAuthor.ID,
 		CommunityID: community.ID,
-	})
+	}, issueAuthor)
 	require.NoError(t, err)
 	assert.NotNil(t, issuePost)
 	assert.Equal(t, "Test Issue Post", issuePost.Title)
@@ -49,9 +48,8 @@ func TestRepository_CreatePostGraph(t *testing.T) {
 		Title:       "Test Solution Post",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &issuePost.ID,
-		UserID:      solutionAuthor.ID,
 		CommunityID: community.ID,
-	})
+	}, solutionAuthor)
 	require.NoError(t, err)
 	assert.NotNil(t, solutionPost)
 	assert.Equal(t, "Test Solution Post", solutionPost.Title)
@@ -63,9 +61,8 @@ func TestRepository_CreatePostGraph(t *testing.T) {
 		Title:       "Test Verification Post",
 		Role:        entPost.RoleVerification,
 		ReplyTo:     &solutionPost.ID,
-		UserID:      verificationAuthor.ID,
 		CommunityID: community.ID,
-	})
+	}, verificationAuthor)
 	require.NoError(t, err)
 	assert.NotNil(t, verificationPost)
 	assert.Equal(t, "Test Verification Post", verificationPost.Title)
@@ -107,9 +104,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 	_, err := repo.Create(ctx, post.PostCreateFields{
 		Title:       "Invalid Solution",
 		Role:        entPost.RoleSolution,
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "solution posts must reply to an existing post")
 
@@ -119,9 +115,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Invalid Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &nonExistentID,
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "parent post not found")
 
@@ -130,9 +125,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Non-Issue Post",
 		Role:        entPost.RoleIssue,
 		Tags:        []string{"discussion"},
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	require.NoError(t, err)
 
 	// Test: Solution post replying to post without 'issue' tag
@@ -140,9 +134,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Invalid Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &nonIssuePost.ID,
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "solution posts can only reply to posts with 'issue' tag")
 
@@ -151,9 +144,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Valid Issue",
 		Role:        entPost.RoleIssue,
 		Tags:        []string{"issue"},
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	require.NoError(t, err)
 
 	// Create a solution post (must be different user)
@@ -161,9 +153,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Valid Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &issuePost.ID,
-		UserID:      otherUser.ID,
 		CommunityID: community.ID,
-	})
+	}, otherUser)
 	require.NoError(t, err)
 
 	// Test: Solution post replying to another solution (not top-level)
@@ -171,9 +162,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Invalid Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &solutionPost.ID,
-		UserID:      user.ID, // Can be same or different user, the issue is that it's replying to a non-top-level post
 		CommunityID: community.ID,
-	})
+	}, user) // Can be same or different user, the issue is that it's replying to a non-top-level post
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "solution posts can only reply to top-level posts")
 
@@ -181,9 +171,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 	_, err = repo.Create(ctx, post.PostCreateFields{
 		Title:       "Invalid Verification",
 		Role:        entPost.RoleVerification,
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "verification posts must reply to an existing post")
 
@@ -192,9 +181,8 @@ func TestRepository_ValidationErrors(t *testing.T) {
 		Title:       "Invalid Verification",
 		Role:        entPost.RoleVerification,
 		ReplyTo:     &issuePost.ID,
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "verification posts can only reply to solution posts")
 }
@@ -214,9 +202,8 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 		Title:       "User's Issue",
 		Role:        entPost.RoleIssue,
 		Tags:        []string{"issue"},
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	require.NoError(t, err)
 
 	// Test: User cannot reply to their own issue with a solution
@@ -224,9 +211,8 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 		Title:       "Self Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &issuePost.ID,
-		UserID:      user.ID, // Same user as issue author
 		CommunityID: community.ID,
-	})
+	}, user) // Same user as issue author
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "users cannot reply to their own posts with solution role")
 
@@ -235,9 +221,8 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 		Title:       "Other User Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &issuePost.ID,
-		UserID:      otherUser.ID, // Different user
 		CommunityID: community.ID,
-	})
+	}, otherUser) // Different user
 	require.NoError(t, err)
 	assert.NotNil(t, solutionPost)
 
@@ -246,9 +231,8 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 		Title:       "Self Verification",
 		Role:        entPost.RoleVerification,
 		ReplyTo:     &solutionPost.ID,
-		UserID:      otherUser.ID, // Same user as solution author
 		CommunityID: community.ID,
-	})
+	}, otherUser) // Same user as solution author
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "users cannot reply to their own posts with verification role")
 
@@ -257,9 +241,8 @@ func TestRepository_SelfReplyValidation(t *testing.T) {
 		Title:       "Issue Author Verification",
 		Role:        entPost.RoleVerification,
 		ReplyTo:     &solutionPost.ID,
-		UserID:      user.ID, // Different user (original issue author)
 		CommunityID: community.ID,
-	})
+	}, user) // Different user (original issue author)
 	require.NoError(t, err)
 	assert.NotNil(t, verificationPost)
 }
@@ -278,9 +261,8 @@ func TestRepository_GetByIDWithReplies(t *testing.T) {
 		Title:       "Test Issue Post",
 		Role:        entPost.RoleIssue,
 		Tags:        []string{"issue", "test"},
-		UserID:      user.ID,
 		CommunityID: community.ID,
-	})
+	}, user)
 	require.NoError(t, err)
 
 	// Create a reply
@@ -289,9 +271,8 @@ func TestRepository_GetByIDWithReplies(t *testing.T) {
 		Title:       "Test Solution",
 		Role:        entPost.RoleSolution,
 		ReplyTo:     &mainPost.ID,
-		UserID:      otherUser.ID,
 		CommunityID: community.ID,
-	})
+	}, otherUser)
 	require.NoError(t, err)
 
 	// Test GetByIDWithReplies
@@ -300,13 +281,13 @@ func TestRepository_GetByIDWithReplies(t *testing.T) {
 	assert.NotNil(t, retrievedPost)
 	assert.Equal(t, mainPost.ID, retrievedPost.ID)
 	assert.Equal(t, "Test Issue Post", retrievedPost.Title)
-	
+
 	// Check that edges are loaded
 	assert.NotNil(t, retrievedPost.Edges.User)
 	assert.Equal(t, user.ID, retrievedPost.Edges.User.ID)
 	assert.NotNil(t, retrievedPost.Edges.Community)
 	assert.Equal(t, community.ID, retrievedPost.Edges.Community.ID)
-	
+
 	// Check replies are loaded
 	assert.Len(t, retrievedPost.Edges.Replies, 1)
 	assert.Equal(t, "Test Solution", retrievedPost.Edges.Replies[0].Title)

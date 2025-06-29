@@ -2,8 +2,10 @@ package community
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 
+	"fixit/engine/community"
 	handler "fixit/web/handler"
 	"fixit/web/layouts"
 )
@@ -21,20 +24,24 @@ var createTplS string
 var createTpl = template.Must(template.New("create").Parse(createTplS))
 
 type CreateData struct {
-	Name      string
-	Slug      string
-	Latitude  string
-	Longitude string
-	Error     string
+	Name           string
+	Title          string
+	Location       string
+	BannerImageURL string
+	Latitude       string
+	Longitude      string
+	Error          string
 }
 
 type Handler struct {
 	store *sessions.CookieStore
+	repo  *community.Repository
 }
 
-func New(sessionKey []byte) *Handler {
+func New(sessionKey []byte, repo *community.Repository) *Handler {
 	return &Handler{
 		store: sessions.NewCookieStore(sessionKey),
+		repo:  repo,
 	}
 }
 
@@ -79,23 +86,27 @@ func (h *Handler) CreatePostHandler(r *http.Request) (handler.Response, error) {
 	}
 
 	name := r.FormValue("name")
-	slug := r.FormValue("slug")
+	title := r.FormValue("title")
+	location := r.FormValue("location")
+	bannerImageURL := r.FormValue("banner_image_url")
 	latitude := r.FormValue("latitude")
 	longitude := r.FormValue("longitude")
 
 	data := CreateData{
-		Name:      name,
-		Slug:      slug,
-		Latitude:  latitude,
-		Longitude: longitude,
+		Name:           name,
+		Title:          title,
+		Location:       location,
+		BannerImageURL: bannerImageURL,
+		Latitude:       latitude,
+		Longitude:      longitude,
 	}
 
 	// Validation
 	var validationError string
 	if name == "" {
 		validationError = "Community name is required"
-	} else if slug == "" {
-		validationError = "URL slug is required"
+	} else if title == "" {
+		validationError = "Community title is required"
 	}
 
 	if validationError != "" {
@@ -116,10 +127,42 @@ func (h *Handler) CreatePostHandler(r *http.Request) (handler.Response, error) {
 		return handler.RedirectTo("/community/new"), nil
 	}
 
-	// TODO: Save community to backend
+	// Create geography string from lat/lng
+	var geography string
+	if latitude != "" && longitude != "" {
+		geography = fmt.Sprintf("POINT(%s %s)", longitude, latitude)
+	}
+
+	// Create community using repository
+	ctx := context.Background()
+	fields := community.CommunityCreateFields{
+		Name:           name,
+		Title:          title,
+		Location:       location,
+		BannerImageURL: bannerImageURL,
+		Geography:      geography,
+	}
+
+	comm, err := h.repo.Create(ctx, fields)
+	if err != nil {
+		// Store form data and error in session
+		session, sessionErr := h.store.Get(r, "fixit_session")
+		if sessionErr != nil {
+			return nil, errors.WithStack(sessionErr)
+		}
+
+		jsonData, jsonErr := json.Marshal(data)
+		if jsonErr != nil {
+			return nil, errors.WithStack(jsonErr)
+		}
+		session.AddFlash(string(jsonData), "form_data")
+		session.AddFlash("Failed to create community: "+err.Error(), "error")
+
+		return handler.RedirectTo("/community/new"), nil
+	}
 
 	// Success - redirect to the community page
-	return handler.RedirectTo("/c/" + slug), nil
+	return handler.RedirectTo("/c/" + comm.Name), nil
 }
 
 func showCreateForm(data CreateData) (handler.Response, error) {

@@ -70,6 +70,16 @@ func Location(v string) predicate.Community {
 	return predicate.Community(sql.FieldEQ(FieldLocation, v))
 }
 
+// BannerImageURL applies equality check predicate on the "banner_image_url" field. It's identical to BannerImageURLEQ.
+func BannerImageURL(v string) predicate.Community {
+	return predicate.Community(sql.FieldEQ(FieldBannerImageURL, v))
+}
+
+// Geography applies equality check predicate on the "geography" field. It's identical to GeographyEQ.
+func Geography(v string) predicate.Community {
+	return predicate.Community(sql.FieldEQ(FieldGeography, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Community {
 	return predicate.Community(sql.FieldEQ(FieldCreatedAt, v))
@@ -283,6 +293,156 @@ func LocationEqualFold(v string) predicate.Community {
 // LocationContainsFold applies the ContainsFold predicate on the "location" field.
 func LocationContainsFold(v string) predicate.Community {
 	return predicate.Community(sql.FieldContainsFold(FieldLocation, v))
+}
+
+// BannerImageURLEQ applies the EQ predicate on the "banner_image_url" field.
+func BannerImageURLEQ(v string) predicate.Community {
+	return predicate.Community(sql.FieldEQ(FieldBannerImageURL, v))
+}
+
+// BannerImageURLNEQ applies the NEQ predicate on the "banner_image_url" field.
+func BannerImageURLNEQ(v string) predicate.Community {
+	return predicate.Community(sql.FieldNEQ(FieldBannerImageURL, v))
+}
+
+// BannerImageURLIn applies the In predicate on the "banner_image_url" field.
+func BannerImageURLIn(vs ...string) predicate.Community {
+	return predicate.Community(sql.FieldIn(FieldBannerImageURL, vs...))
+}
+
+// BannerImageURLNotIn applies the NotIn predicate on the "banner_image_url" field.
+func BannerImageURLNotIn(vs ...string) predicate.Community {
+	return predicate.Community(sql.FieldNotIn(FieldBannerImageURL, vs...))
+}
+
+// BannerImageURLGT applies the GT predicate on the "banner_image_url" field.
+func BannerImageURLGT(v string) predicate.Community {
+	return predicate.Community(sql.FieldGT(FieldBannerImageURL, v))
+}
+
+// BannerImageURLGTE applies the GTE predicate on the "banner_image_url" field.
+func BannerImageURLGTE(v string) predicate.Community {
+	return predicate.Community(sql.FieldGTE(FieldBannerImageURL, v))
+}
+
+// BannerImageURLLT applies the LT predicate on the "banner_image_url" field.
+func BannerImageURLLT(v string) predicate.Community {
+	return predicate.Community(sql.FieldLT(FieldBannerImageURL, v))
+}
+
+// BannerImageURLLTE applies the LTE predicate on the "banner_image_url" field.
+func BannerImageURLLTE(v string) predicate.Community {
+	return predicate.Community(sql.FieldLTE(FieldBannerImageURL, v))
+}
+
+// BannerImageURLContains applies the Contains predicate on the "banner_image_url" field.
+func BannerImageURLContains(v string) predicate.Community {
+	return predicate.Community(sql.FieldContains(FieldBannerImageURL, v))
+}
+
+// BannerImageURLHasPrefix applies the HasPrefix predicate on the "banner_image_url" field.
+func BannerImageURLHasPrefix(v string) predicate.Community {
+	return predicate.Community(sql.FieldHasPrefix(FieldBannerImageURL, v))
+}
+
+// BannerImageURLHasSuffix applies the HasSuffix predicate on the "banner_image_url" field.
+func BannerImageURLHasSuffix(v string) predicate.Community {
+	return predicate.Community(sql.FieldHasSuffix(FieldBannerImageURL, v))
+}
+
+// BannerImageURLIsNil applies the IsNil predicate on the "banner_image_url" field.
+func BannerImageURLIsNil() predicate.Community {
+	return predicate.Community(sql.FieldIsNull(FieldBannerImageURL))
+}
+
+// BannerImageURLNotNil applies the NotNil predicate on the "banner_image_url" field.
+func BannerImageURLNotNil() predicate.Community {
+	return predicate.Community(sql.FieldNotNull(FieldBannerImageURL))
+}
+
+// BannerImageURLEqualFold applies the EqualFold predicate on the "banner_image_url" field.
+func BannerImageURLEqualFold(v string) predicate.Community {
+	return predicate.Community(sql.FieldEqualFold(FieldBannerImageURL, v))
+}
+
+// BannerImageURLContainsFold applies the ContainsFold predicate on the "banner_image_url" field.
+func BannerImageURLContainsFold(v string) predicate.Community {
+	return predicate.Community(sql.FieldContainsFold(FieldBannerImageURL, v))
+}
+
+// GeographyEQ applies the EQ predicate on the "geography" field.
+func GeographyEQ(v string) predicate.Community {
+	return predicate.Community(sql.FieldEQ(FieldGeography, v))
+}
+
+// GeographyNEQ applies the NEQ predicate on the "geography" field.
+func GeographyNEQ(v string) predicate.Community {
+	return predicate.Community(sql.FieldNEQ(FieldGeography, v))
+}
+
+// GeographyIn applies the In predicate on the "geography" field.
+func GeographyIn(vs ...string) predicate.Community {
+	return predicate.Community(sql.FieldIn(FieldGeography, vs...))
+}
+
+// GeographyNotIn applies the NotIn predicate on the "geography" field.
+func GeographyNotIn(vs ...string) predicate.Community {
+	return predicate.Community(sql.FieldNotIn(FieldGeography, vs...))
+}
+
+// GeographyGT applies the GT predicate on the "geography" field.
+func GeographyGT(v string) predicate.Community {
+	return predicate.Community(sql.FieldGT(FieldGeography, v))
+}
+
+// GeographyGTE applies the GTE predicate on the "geography" field.
+func GeographyGTE(v string) predicate.Community {
+	return predicate.Community(sql.FieldGTE(FieldGeography, v))
+}
+
+// GeographyLT applies the LT predicate on the "geography" field.
+func GeographyLT(v string) predicate.Community {
+	return predicate.Community(sql.FieldLT(FieldGeography, v))
+}
+
+// GeographyLTE applies the LTE predicate on the "geography" field.
+func GeographyLTE(v string) predicate.Community {
+	return predicate.Community(sql.FieldLTE(FieldGeography, v))
+}
+
+// GeographyContains applies the Contains predicate on the "geography" field.
+func GeographyContains(v string) predicate.Community {
+	return predicate.Community(sql.FieldContains(FieldGeography, v))
+}
+
+// GeographyHasPrefix applies the HasPrefix predicate on the "geography" field.
+func GeographyHasPrefix(v string) predicate.Community {
+	return predicate.Community(sql.FieldHasPrefix(FieldGeography, v))
+}
+
+// GeographyHasSuffix applies the HasSuffix predicate on the "geography" field.
+func GeographyHasSuffix(v string) predicate.Community {
+	return predicate.Community(sql.FieldHasSuffix(FieldGeography, v))
+}
+
+// GeographyIsNil applies the IsNil predicate on the "geography" field.
+func GeographyIsNil() predicate.Community {
+	return predicate.Community(sql.FieldIsNull(FieldGeography))
+}
+
+// GeographyNotNil applies the NotNil predicate on the "geography" field.
+func GeographyNotNil() predicate.Community {
+	return predicate.Community(sql.FieldNotNull(FieldGeography))
+}
+
+// GeographyEqualFold applies the EqualFold predicate on the "geography" field.
+func GeographyEqualFold(v string) predicate.Community {
+	return predicate.Community(sql.FieldEqualFold(FieldGeography, v))
+}
+
+// GeographyContainsFold applies the ContainsFold predicate on the "geography" field.
+func GeographyContainsFold(v string) predicate.Community {
+	return predicate.Community(sql.FieldContainsFold(FieldGeography, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

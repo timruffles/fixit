@@ -20,6 +20,10 @@ const (
 	FieldTitle = "title"
 	// FieldLocation holds the string denoting the location field in the database.
 	FieldLocation = "location"
+	// FieldBannerImageURL holds the string denoting the banner_image_url field in the database.
+	FieldBannerImageURL = "banner_image_url"
+	// FieldGeography holds the string denoting the geography field in the database.
+	FieldGeography = "geography"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -34,6 +38,8 @@ var Columns = []string{
 	FieldName,
 	FieldTitle,
 	FieldLocation,
+	FieldBannerImageURL,
+	FieldGeography,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -84,6 +90,16 @@ func ByTitle(opts ...sql.OrderTermOption) OrderOption {
 // ByLocation orders the results by the location field.
 func ByLocation(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLocation, opts...).ToFunc()
+}
+
+// ByBannerImageURL orders the results by the banner_image_url field.
+func ByBannerImageURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBannerImageURL, opts...).ToFunc()
+}
+
+// ByGeography orders the results by the geography field.
+func ByGeography(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGeography, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

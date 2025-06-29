@@ -24,6 +24,10 @@ type Community struct {
 	Title string `json:"title,omitempty"`
 	// Location holds the value of the "location" field.
 	Location string `json:"location,omitempty"`
+	// BannerImageURL holds the value of the "banner_image_url" field.
+	BannerImageURL string `json:"banner_image_url,omitempty"`
+	// Geography holds the value of the "geography" field.
+	Geography string `json:"geography,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -36,7 +40,7 @@ func (*Community) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case community.FieldName, community.FieldTitle, community.FieldLocation:
+		case community.FieldName, community.FieldTitle, community.FieldLocation, community.FieldBannerImageURL, community.FieldGeography:
 			values[i] = new(sql.NullString)
 		case community.FieldCreatedAt, community.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -80,6 +84,18 @@ func (c *Community) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field location", values[i])
 			} else if value.Valid {
 				c.Location = value.String
+			}
+		case community.FieldBannerImageURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field banner_image_url", values[i])
+			} else if value.Valid {
+				c.BannerImageURL = value.String
+			}
+		case community.FieldGeography:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field geography", values[i])
+			} else if value.Valid {
+				c.Geography = value.String
 			}
 		case community.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -137,6 +153,12 @@ func (c *Community) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("location=")
 	builder.WriteString(c.Location)
+	builder.WriteString(", ")
+	builder.WriteString("banner_image_url=")
+	builder.WriteString(c.BannerImageURL)
+	builder.WriteString(", ")
+	builder.WriteString("geography=")
+	builder.WriteString(c.Geography)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))

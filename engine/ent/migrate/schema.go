@@ -15,6 +15,8 @@ var (
 		{Name: "name", Type: field.TypeString, Size: 128},
 		{Name: "title", Type: field.TypeString, Size: 128},
 		{Name: "location", Type: field.TypeString, Nullable: true},
+		{Name: "banner_image_url", Type: field.TypeString, Nullable: true},
+		{Name: "geography", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}

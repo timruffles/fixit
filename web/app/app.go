@@ -57,15 +57,16 @@ func (a *App) Initialize() error {
 	// Register frontpage handler
 	frontpageHandler := frontpage.New(repo)
 	a.server.RegisterHandler(frontpageHandler)
-	
+
 	listHandler := list.New(a.server.Client())
 	a.server.RegisterHandler(listHandler)
-	
+
 	postRepo := enginePost.New(a.server.Client())
-	postHandler := post.New(postRepo)
+	postHandler := post.New(postRepo, repo, ab)
 	a.server.RegisterHandler(postHandler)
-	
-	a.server.RegisterHandler(webcommunity.New([]byte(a.cfg.Auth.SessionKey)))
+
+	communityHandler := webcommunity.New([]byte(a.cfg.Auth.SessionKey), repo)
+	a.server.RegisterHandler(communityHandler)
 
 	return nil
 }

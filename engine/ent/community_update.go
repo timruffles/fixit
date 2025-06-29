@@ -76,6 +76,46 @@ func (cu *CommunityUpdate) ClearLocation() *CommunityUpdate {
 	return cu
 }
 
+// SetBannerImageURL sets the "banner_image_url" field.
+func (cu *CommunityUpdate) SetBannerImageURL(s string) *CommunityUpdate {
+	cu.mutation.SetBannerImageURL(s)
+	return cu
+}
+
+// SetNillableBannerImageURL sets the "banner_image_url" field if the given value is not nil.
+func (cu *CommunityUpdate) SetNillableBannerImageURL(s *string) *CommunityUpdate {
+	if s != nil {
+		cu.SetBannerImageURL(*s)
+	}
+	return cu
+}
+
+// ClearBannerImageURL clears the value of the "banner_image_url" field.
+func (cu *CommunityUpdate) ClearBannerImageURL() *CommunityUpdate {
+	cu.mutation.ClearBannerImageURL()
+	return cu
+}
+
+// SetGeography sets the "geography" field.
+func (cu *CommunityUpdate) SetGeography(s string) *CommunityUpdate {
+	cu.mutation.SetGeography(s)
+	return cu
+}
+
+// SetNillableGeography sets the "geography" field if the given value is not nil.
+func (cu *CommunityUpdate) SetNillableGeography(s *string) *CommunityUpdate {
+	if s != nil {
+		cu.SetGeography(*s)
+	}
+	return cu
+}
+
+// ClearGeography clears the value of the "geography" field.
+func (cu *CommunityUpdate) ClearGeography() *CommunityUpdate {
+	cu.mutation.ClearGeography()
+	return cu
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (cu *CommunityUpdate) SetUpdatedAt(t time.Time) *CommunityUpdate {
 	cu.mutation.SetUpdatedAt(t)
@@ -162,6 +202,18 @@ func (cu *CommunityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if cu.mutation.LocationCleared() {
 		_spec.ClearField(community.FieldLocation, field.TypeString)
 	}
+	if value, ok := cu.mutation.BannerImageURL(); ok {
+		_spec.SetField(community.FieldBannerImageURL, field.TypeString, value)
+	}
+	if cu.mutation.BannerImageURLCleared() {
+		_spec.ClearField(community.FieldBannerImageURL, field.TypeString)
+	}
+	if value, ok := cu.mutation.Geography(); ok {
+		_spec.SetField(community.FieldGeography, field.TypeString, value)
+	}
+	if cu.mutation.GeographyCleared() {
+		_spec.ClearField(community.FieldGeography, field.TypeString)
+	}
 	if value, ok := cu.mutation.UpdatedAt(); ok {
 		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -230,6 +282,46 @@ func (cuo *CommunityUpdateOne) SetNillableLocation(s *string) *CommunityUpdateOn
 // ClearLocation clears the value of the "location" field.
 func (cuo *CommunityUpdateOne) ClearLocation() *CommunityUpdateOne {
 	cuo.mutation.ClearLocation()
+	return cuo
+}
+
+// SetBannerImageURL sets the "banner_image_url" field.
+func (cuo *CommunityUpdateOne) SetBannerImageURL(s string) *CommunityUpdateOne {
+	cuo.mutation.SetBannerImageURL(s)
+	return cuo
+}
+
+// SetNillableBannerImageURL sets the "banner_image_url" field if the given value is not nil.
+func (cuo *CommunityUpdateOne) SetNillableBannerImageURL(s *string) *CommunityUpdateOne {
+	if s != nil {
+		cuo.SetBannerImageURL(*s)
+	}
+	return cuo
+}
+
+// ClearBannerImageURL clears the value of the "banner_image_url" field.
+func (cuo *CommunityUpdateOne) ClearBannerImageURL() *CommunityUpdateOne {
+	cuo.mutation.ClearBannerImageURL()
+	return cuo
+}
+
+// SetGeography sets the "geography" field.
+func (cuo *CommunityUpdateOne) SetGeography(s string) *CommunityUpdateOne {
+	cuo.mutation.SetGeography(s)
+	return cuo
+}
+
+// SetNillableGeography sets the "geography" field if the given value is not nil.
+func (cuo *CommunityUpdateOne) SetNillableGeography(s *string) *CommunityUpdateOne {
+	if s != nil {
+		cuo.SetGeography(*s)
+	}
+	return cuo
+}
+
+// ClearGeography clears the value of the "geography" field.
+func (cuo *CommunityUpdateOne) ClearGeography() *CommunityUpdateOne {
+	cuo.mutation.ClearGeography()
 	return cuo
 }
 
@@ -348,6 +440,18 @@ func (cuo *CommunityUpdateOne) sqlSave(ctx context.Context) (_node *Community, e
 	}
 	if cuo.mutation.LocationCleared() {
 		_spec.ClearField(community.FieldLocation, field.TypeString)
+	}
+	if value, ok := cuo.mutation.BannerImageURL(); ok {
+		_spec.SetField(community.FieldBannerImageURL, field.TypeString, value)
+	}
+	if cuo.mutation.BannerImageURLCleared() {
+		_spec.ClearField(community.FieldBannerImageURL, field.TypeString)
+	}
+	if value, ok := cuo.mutation.Geography(); ok {
+		_spec.SetField(community.FieldGeography, field.TypeString, value)
+	}
+	if cuo.mutation.GeographyCleared() {
+		_spec.ClearField(community.FieldGeography, field.TypeString)
 	}
 	if value, ok := cuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)

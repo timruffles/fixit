@@ -1,14 +1,13 @@
 
-- posting for demo
+- [] posting for demo
   - [] post solution
   - [] post solution verification
   - [] see it solved
 - [] load councillor data for community
+- [] design for demo
+  - [] drop margin on mobile
 
-
-- list page real
-
-
+- [x] list page real
 
 # QoL for contributing
 

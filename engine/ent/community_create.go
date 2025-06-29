@@ -47,6 +47,34 @@ func (cc *CommunityCreate) SetNillableLocation(s *string) *CommunityCreate {
 	return cc
 }
 
+// SetBannerImageURL sets the "banner_image_url" field.
+func (cc *CommunityCreate) SetBannerImageURL(s string) *CommunityCreate {
+	cc.mutation.SetBannerImageURL(s)
+	return cc
+}
+
+// SetNillableBannerImageURL sets the "banner_image_url" field if the given value is not nil.
+func (cc *CommunityCreate) SetNillableBannerImageURL(s *string) *CommunityCreate {
+	if s != nil {
+		cc.SetBannerImageURL(*s)
+	}
+	return cc
+}
+
+// SetGeography sets the "geography" field.
+func (cc *CommunityCreate) SetGeography(s string) *CommunityCreate {
+	cc.mutation.SetGeography(s)
+	return cc
+}
+
+// SetNillableGeography sets the "geography" field if the given value is not nil.
+func (cc *CommunityCreate) SetNillableGeography(s *string) *CommunityCreate {
+	if s != nil {
+		cc.SetGeography(*s)
+	}
+	return cc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (cc *CommunityCreate) SetCreatedAt(t time.Time) *CommunityCreate {
 	cc.mutation.SetCreatedAt(t)
@@ -208,6 +236,14 @@ func (cc *CommunityCreate) createSpec() (*Community, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.Location(); ok {
 		_spec.SetField(community.FieldLocation, field.TypeString, value)
 		_node.Location = value
+	}
+	if value, ok := cc.mutation.BannerImageURL(); ok {
+		_spec.SetField(community.FieldBannerImageURL, field.TypeString, value)
+		_node.BannerImageURL = value
+	}
+	if value, ok := cc.mutation.Geography(); ok {
+		_spec.SetField(community.FieldGeography, field.TypeString, value)
+		_node.Geography = value
 	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
 		_spec.SetField(community.FieldCreatedAt, field.TypeTime, value)

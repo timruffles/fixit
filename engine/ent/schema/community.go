@@ -36,6 +36,10 @@ func (Community) Fields() []ent.Field {
 			MaxLen(128),
 		field.String("location").
 			Optional(),
+		field.String("banner_image_url").
+			Optional(),
+		field.String("geography").
+			Optional(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

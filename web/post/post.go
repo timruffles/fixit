@@ -4,17 +4,22 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/aarondl/authboss/v3"
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
+	"fixit/engine/auth"
+	"fixit/engine/community"
 	"fixit/engine/ent"
-	"fixit/engine/post"
+	"fixit/engine/ent/post"
+	postEngine "fixit/engine/post"
 	"fixit/web/handler"
 	"fixit/web/layouts"
 )
@@ -58,27 +63,27 @@ type CreatePostData struct {
 }
 
 type ShowPostData struct {
-	ID                   uuid.UUID
-	Title                string
-	User                 *ent.User
-	Community            *ent.Community
-	CreatedAt            time.Time
-	Tags                 []string
-	Role                 string
-	HasAcceptedSolution  bool
-	Solutions            []*PostReply
-	ChatMessages         []*PostReply
-}
-
-type PostReply struct {
 	ID                  uuid.UUID
 	Title               string
 	User                *ent.User
+	Community           *ent.Community
 	CreatedAt           time.Time
+	Tags                []string
 	Role                string
-	IsAccepted          bool
-	HasVerifications    bool
-	VerificationCount   int
+	HasAcceptedSolution bool
+	Solutions           []*PostReply
+	ChatMessages        []*PostReply
+}
+
+type PostReply struct {
+	ID                uuid.UUID
+	Title             string
+	User              *ent.User
+	CreatedAt         time.Time
+	Role              string
+	IsAccepted        bool
+	HasVerifications  bool
+	VerificationCount int
 }
 
 func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, error) {
@@ -89,11 +94,13 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 	title := r.FormValue("title")
 	body := r.FormValue("body")
 	tags := r.FormValue("tags")
+	communitySlug := r.FormValue("community")
 
 	data := CreatePostData{
-		Title: title,
-		Body:  body,
-		Tags:  tags,
+		Title:       title,
+		Body:        body,
+		Tags:        tags,
+		CommunityID: communitySlug,
 	}
 
 	if title == "" {
@@ -105,13 +112,68 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 		return handler.BadInput(content), nil
 	}
 
-	// TODO: Save post to backend
-
-	content, err := renderCreatePost(CreatePostData{})
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if communitySlug == "" {
+		data.Error = "Community is required"
+		content, err := renderCreatePost(data)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return handler.BadInput(content), nil
 	}
-	return handler.Ok(content), nil
+
+	userI, err := h.ab.CurrentUser(r)
+	if err != nil {
+		return handler.BadInput([]byte("not logged in")), nil
+	}
+
+	user, ok := userI.(auth.User)
+	if !ok {
+		return nil, errors.Errorf("unexpected user type %T", userI)
+	}
+
+	ctx := r.Context()
+
+	// Get community by slug to get its ID
+	comm, err := h.communityRepo.GetBySlug(ctx, communitySlug)
+	if err != nil {
+		data.Error = "Community not found"
+		content, renderErr := renderCreatePost(data)
+		if renderErr != nil {
+			return nil, errors.WithStack(renderErr)
+		}
+		return handler.BadInput(content), nil
+	}
+
+	// Parse tags
+	var tagsList []string
+	if tags != "" {
+		tagsList = strings.Split(tags, ",")
+		for i, tag := range tagsList {
+			tagsList[i] = strings.TrimSpace(tag)
+		}
+	}
+
+	// Create post using repository
+	fields := postEngine.PostCreateFields{
+		Title:       title,
+		Role:        post.RoleIssue, // Default to issue for new posts
+		Tags:        tagsList,
+		CommunityID: comm.ID,
+	}
+
+	createdPost, err := h.postRepo.Create(ctx, fields, user.User)
+	if err != nil {
+		data.Error = "Failed to create post: " + err.Error()
+		content, renderErr := renderCreatePost(data)
+		if renderErr != nil {
+			return nil, errors.WithStack(renderErr)
+		}
+		return handler.BadInput(content), nil
+	}
+
+	// Redirect to community page with post ID
+	redirectURL := fmt.Sprintf("/c/%s?posted_id=%s", communitySlug, createdPost.ID.String())
+	return handler.RedirectTo(redirectURL), nil
 }
 
 func renderCreatePost(data CreatePostData) ([]byte, error) {
@@ -129,13 +191,17 @@ func renderCreatePost(data CreatePostData) ([]byte, error) {
 	return layouts.WithGeneral(layoutData)
 }
 
-type Handler struct{
-	postRepo *post.Repository
+type Handler struct {
+	postRepo      *postEngine.Repository
+	communityRepo *community.Repository
+	ab            *authboss.Authboss
 }
 
-func New(postRepo *post.Repository) *Handler {
+func New(postRepo *postEngine.Repository, communityRepo *community.Repository, ab *authboss.Authboss) *Handler {
 	return &Handler{
-		postRepo: postRepo,
+		postRepo:      postRepo,
+		communityRepo: communityRepo,
+		ab:            ab,
 	}
 }
 
@@ -154,16 +220,24 @@ func (h *Handler) CreatePostGetHandler(r *http.Request) (handler.Response, error
 	return handler.Ok(content), nil
 }
 
+func mustParseUUID(s string) uuid.UUID {
+	id, err := uuid.FromString(s)
+	if err != nil {
+		panic("invalid UUID: " + s)
+	}
+	return id
+}
+
 func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 	vars := mux.Vars(r)
 	postIDStr := vars["id"]
-	
+
 	postID, err := uuid.FromString(postIDStr)
 	if err != nil {
 		return handler.BadInput([]byte("Invalid post ID")), nil
 	}
 
-	post, err := h.postRepo.GetByIDWithReplies(context.Background(), postID)
+	postEntity, err := h.postRepo.GetByIDWithReplies(context.Background(), postID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -173,7 +247,7 @@ func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 	var chatMessages []*PostReply
 	hasAcceptedSolution := false
 
-	for _, reply := range post.Edges.Replies {
+	for _, reply := range postEntity.Edges.Replies {
 		replyData := &PostReply{
 			ID:        reply.ID,
 			Title:     reply.Title,
@@ -185,9 +259,9 @@ func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 		switch reply.Role {
 		case "solution":
 			// TODO: Check if this solution is accepted and count verifications
-			replyData.IsAccepted = false // TODO: implement acceptance logic
+			replyData.IsAccepted = false       // TODO: implement acceptance logic
 			replyData.HasVerifications = false // TODO: count verification replies
-			replyData.VerificationCount = 0 // TODO: count verification replies
+			replyData.VerificationCount = 0    // TODO: count verification replies
 			if replyData.IsAccepted {
 				hasAcceptedSolution = true
 			}
@@ -198,13 +272,13 @@ func (h *Handler) ShowPostHandler(r *http.Request) (handler.Response, error) {
 	}
 
 	data := ShowPostData{
-		ID:                  post.ID,
-		Title:               post.Title,
-		User:                post.Edges.User,
-		Community:           post.Edges.Community,
-		CreatedAt:           post.CreatedAt,
-		Tags:                post.Tags,
-		Role:                string(post.Role),
+		ID:                  postEntity.ID,
+		Title:               postEntity.Title,
+		User:                postEntity.Edges.User,
+		Community:           postEntity.Edges.Community,
+		CreatedAt:           postEntity.CreatedAt,
+		Tags:                postEntity.Tags,
+		Role:                string(postEntity.Role),
 		HasAcceptedSolution: hasAcceptedSolution,
 		Solutions:           solutions,
 		ChatMessages:        chatMessages,

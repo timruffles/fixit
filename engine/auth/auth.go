@@ -28,6 +28,8 @@ func Setup(client *ent.Client, cfg Config) (*authboss.Authboss, error) {
 	ab.Config.Storage.CookieState = NewSessionStorer([]byte(cfg.SessionKey))
 
 	ab.Config.Paths.Mount = "/auth"
+	ab.Config.Paths.AuthLoginOK = "/"
+	ab.Config.Paths.RegisterOK = "/"
 	ab.Config.Paths.RootURL = cfg.RootURL
 
 	// Use our custom renderer

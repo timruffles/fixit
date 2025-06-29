@@ -3,6 +3,7 @@ package post
 import (
 	"context"
 
+	"github.com/aarondl/authboss/v3"
 	"github.com/gofrs/uuid/v5"
 	"github.com/pkg/errors"
 
@@ -12,6 +13,10 @@ import (
 
 type Repository struct {
 	client *ent.Client
+	ab     *authboss.Authboss
+}
+
+type Auth interface {
 }
 
 func New(client *ent.Client) *Repository {
@@ -25,20 +30,30 @@ type PostCreateFields struct {
 	Role        post.Role  `json:"role,omitempty"`
 	Tags        []string   `json:"tags,omitempty"`
 	ReplyTo     *uuid.UUID `json:"replyTo,omitempty"`
-	UserID      uuid.UUID  `json:"userID,omitempty"`
+	UserEmail   string     `json:"userEmail,omitempty"`
 	CommunityID uuid.UUID  `json:"communityID,omitempty"`
 }
 
-func (r *Repository) Create(ctx context.Context, fields PostCreateFields) (*ent.Post, error) {
+func (r *Repository) Create(ctx context.Context, fields PostCreateFields, user *ent.User) (*ent.Post, error) {
+	// Create fields with user ID for validation
+	validationFields := PostCreateFields{
+		Title:       fields.Title,
+		Role:        fields.Role,
+		Tags:        fields.Tags,
+		ReplyTo:     fields.ReplyTo,
+		UserEmail:   fields.UserEmail,
+		CommunityID: fields.CommunityID,
+	}
+
 	// Validate role-specific requirements
-	if err := r.validateRole(ctx, fields); err != nil {
+	if err := r.validateRole(ctx, validationFields, user.ID); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	builder := r.client.Post.Create().
 		SetTitle(fields.Title).
 		SetRole(fields.Role).
-		SetUserID(fields.UserID).
+		SetUserID(user.ID).
 		SetCommunityID(fields.CommunityID)
 
 	if fields.Tags != nil {
@@ -73,18 +88,18 @@ func (r *Repository) GetByIDWithReplies(ctx context.Context, id uuid.UUID) (*ent
 	return post, nil
 }
 
-func (r *Repository) validateRole(ctx context.Context, fields PostCreateFields) error {
+func (r *Repository) validateRole(ctx context.Context, fields PostCreateFields, userID uuid.UUID) error {
 	switch fields.Role {
 	case post.RoleSolution:
-		return r.validateSolutionRole(ctx, fields)
+		return r.validateSolutionRole(ctx, fields, userID)
 	case post.RoleVerification:
-		return r.validateVerificationRole(ctx, fields)
+		return r.validateVerificationRole(ctx, fields, userID)
 	default:
 		return nil
 	}
 }
 
-func (r *Repository) validateSolutionRole(ctx context.Context, fields PostCreateFields) error {
+func (r *Repository) validateSolutionRole(ctx context.Context, fields PostCreateFields, userID uuid.UUID) error {
 	if fields.ReplyTo == nil {
 		return errors.New("solution posts must reply to an existing post")
 	}
@@ -119,14 +134,14 @@ func (r *Repository) validateSolutionRole(ctx context.Context, fields PostCreate
 	}
 
 	// Check that the user is not replying to their own post
-	if parentPost.Edges.User != nil && parentPost.Edges.User.ID == fields.UserID {
+	if parentPost.Edges.User != nil && parentPost.Edges.User.ID == userID {
 		return errors.New("users cannot reply to their own posts with solution role")
 	}
 
 	return nil
 }
 
-func (r *Repository) validateVerificationRole(ctx context.Context, fields PostCreateFields) error {
+func (r *Repository) validateVerificationRole(ctx context.Context, fields PostCreateFields, userID uuid.UUID) error {
 	if fields.ReplyTo == nil {
 		return errors.New("verification posts must reply to an existing post")
 	}
@@ -148,7 +163,7 @@ func (r *Repository) validateVerificationRole(ctx context.Context, fields PostCr
 	}
 
 	// Check that the user is not replying to their own post
-	if parentPost.Edges.User != nil && parentPost.Edges.User.ID == fields.UserID {
+	if parentPost.Edges.User != nil && parentPost.Edges.User.ID == userID {
 		return errors.New("users cannot reply to their own posts with verification role")
 	}
 
