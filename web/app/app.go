@@ -56,7 +56,7 @@ func (a *App) Initialize() error {
 	}
 
 	// Register frontpage handler
-	frontpageHandler := frontpage.New(repo)
+	frontpageHandler := frontpage.New(repo, ab)
 	a.server.RegisterHandler(frontpageHandler)
 
 	listHandler := list.New(a.server.Client())

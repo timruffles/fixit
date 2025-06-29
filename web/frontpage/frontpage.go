@@ -9,10 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aarondl/authboss/v3"
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
+	"fixit/engine/auth"
 	"fixit/engine/community"
 	"fixit/engine/config"
 	"fixit/engine/ent"
@@ -43,21 +45,32 @@ var frontpageTpl = template.Must(template.New("frontpage").Funcs(templateFuncs).
 
 type Handler struct {
 	communityRepo *community.Repository
+	ab            *authboss.Authboss
 }
 
 type FrontpageData struct {
-	AppName     string
-	Communities []*ent.Community
+	AppName       string
+	Communities   []*ent.Community
+	IsLoggedIn    bool
+	Username      string
 }
 
-func New(communityRepo *community.Repository) *Handler {
+func New(communityRepo *community.Repository, ab *authboss.Authboss) *Handler {
 	return &Handler{
 		communityRepo: communityRepo,
+		ab:            ab,
 	}
 }
 
 func (h *Handler) FrontpageHandler(r *http.Request) (handler.Response, error) {
 	ctx := context.Background()
+
+	// Check if user is authenticated
+	user, isLoggedIn := auth.RequireAuth(h.ab, r)
+	var username string
+	if isLoggedIn {
+		username = user.GetUsername()
+	}
 
 	// Get location from query parameter if provided
 	location := r.URL.Query().Get("location")
@@ -73,6 +86,8 @@ func (h *Handler) FrontpageHandler(r *http.Request) (handler.Response, error) {
 	data := FrontpageData{
 		AppName:     config.AppName,
 		Communities: communities,
+		IsLoggedIn:  isLoggedIn,
+		Username:    username,
 	}
 
 	content, err := renderFrontpage(data)

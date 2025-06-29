@@ -70,6 +70,51 @@ func TestFrontPage(t *testing.T) {
 	assert.Contains(t, communityBody, bob.Username)
 }
 
+func TestPostWithImages(t *testing.T) {
+	// Create test data using factory package
+	dbClient := createDBClient(t)
+	defer dbClient.Close()
+
+	// Create test users and community with posts
+	alice := factory.User(t, dbClient, "alice-*")
+	community := factory.Community(t, dbClient, "test-community-*")
+
+	// Create post with image
+	postWithImage, err := dbClient.Post.Create().
+		SetTitle("Issue with image attachment").
+		SetBody("This post has an image attached").
+		SetImageURL("https://example.com/test-image.jpg").
+		SetUser(alice).
+		SetCommunity(community).
+		Save(context.Background())
+	require.NoError(t, err)
+
+	// Test the community page shows polaroid image
+	resp, err := http.Get(testServer.URL + "/c/" + community.Name)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	communityBody := readResponseBody(t, resp)
+
+	// Check that the image and polaroid styles are present
+	assert.Contains(t, communityBody, "polaroid-container")
+	assert.Contains(t, communityBody, "polaroid-image")
+	assert.Contains(t, communityBody, "https://example.com/test-image.jpg")
+
+	// Test the individual post page shows large image
+	resp, err = http.Get(testServer.URL + "/p/" + postWithImage.ID.String())
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	postBody := readResponseBody(t, resp)
+
+	// Check that the large image is displayed
+	assert.Contains(t, postBody, "https://example.com/test-image.jpg")
+	assert.Contains(t, postBody, "max-h-96") // Large image styling
+}
+
 func createDBClient(t *testing.T) *ent.Client {
 	client, err := ent.Open("postgres", config.TestDBURL)
 	require.NoError(t, err)

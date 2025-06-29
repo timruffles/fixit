@@ -1,6 +1,20 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Top Navigation -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div class="flex justify-end">
+            {{if .IsLoggedIn}}
+                <span class="text-gray-700 font-medium">@{{.Username}}</span>
+            {{else}}
+                <div class="space-x-4">
+                    <a href="/auth/login" class="text-blue-600 hover:text-blue-800 font-medium">Login</a>
+                    <a href="/auth/register" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Sign Up</a>
+                </div>
+            {{end}}
+        </div>
+    </div>
+
     <!-- Hero Section -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
         <div class="text-center">
             <h1 class="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
                 Fix your neighbourhood
