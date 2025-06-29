@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/aarondl/authboss/v3"
 	"github.com/gorilla/sessions"
 
 	"fixit/web/errors"
@@ -53,6 +54,10 @@ func Wrap(fn Fn) func(http.ResponseWriter,
 				return
 			}
 			http.Redirect(writer, request, res.To, http.StatusFound)
+		case *AuthRequiredRedirect:
+			// Save authboss state before redirect - for now just redirect
+			// The flash message should already be set in the state
+			http.Redirect(writer, request, res.To, http.StatusFound)
 		default:
 			slog.Error("unknown response type")
 			errors.Handle500(writer, request, nil)
@@ -87,6 +92,16 @@ type RedirectWithSession struct {
 func (r *RedirectWithSession) isResponse() {}
 
 var _ Response = &RedirectWithSession{}
+
+type AuthRequiredRedirect struct {
+	State authboss.ClientState
+	AB    *authboss.Authboss
+	To    string
+}
+
+func (a *AuthRequiredRedirect) isResponse() {}
+
+var _ Response = &AuthRequiredRedirect{}
 
 func BadInput(content []byte) Response {
 	return &ResponseBuffered{

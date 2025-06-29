@@ -66,7 +66,7 @@ func (a *App) Initialize() error {
 	postHandler := post.New(postRepo, repo, ab)
 	a.server.RegisterHandler(postHandler)
 
-	communityHandler := webcommunity.New([]byte(a.cfg.Auth.SessionKey), repo)
+	communityHandler := webcommunity.New([]byte(a.cfg.Auth.SessionKey), repo, ab)
 	a.server.RegisterHandler(communityHandler)
 
 	// Set up 404 handler for unmatched routes

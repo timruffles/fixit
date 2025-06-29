@@ -9,10 +9,12 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/aarondl/authboss/v3"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 
+	"fixit/engine/auth"
 	"fixit/engine/community"
 	handler "fixit/web/handler"
 	"fixit/web/layouts"
@@ -36,12 +38,14 @@ type CreateData struct {
 type Handler struct {
 	store *sessions.CookieStore
 	repo  *community.Repository
+	ab    *authboss.Authboss
 }
 
-func New(sessionKey []byte, repo *community.Repository) *Handler {
+func New(sessionKey []byte, repo *community.Repository, ab *authboss.Authboss) *Handler {
 	return &Handler{
 		store: sessions.NewCookieStore(sessionKey),
 		repo:  repo,
+		ab:    ab,
 	}
 }
 
@@ -81,6 +85,14 @@ func (h *Handler) CreateGetHandler(r *http.Request) (handler.Response, error) {
 }
 
 func (h *Handler) CreatePostHandler(r *http.Request) (handler.Response, error) {
+	// Check authentication first
+	_, isAuthenticated := auth.RequireAuth(h.ab, r)
+	if !isAuthenticated {
+		// For now, just redirect to login without flash message
+		// TODO: Implement flash message support
+		return handler.RedirectTo("/auth/login"), nil
+	}
+
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		return handler.BadInput([]byte("Failed to parse form")), nil
 	}

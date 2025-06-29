@@ -3,11 +3,13 @@ package errors
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"html/template"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime/debug"
 
 	"github.com/pkg/errors"
 
@@ -103,7 +105,9 @@ func PanicRecoveryMiddleware(next http.Handler) http.Handler {
 				} else {
 					err = errors.Errorf("non-error panic: %+v", recovery)
 				}
-				slog.Error("panic recovered", "method", r.Method, "path", r.URL.Path, "err", err)
+				slog.Error("panic recovered", "method", r.Method,
+					"path", r.URL.Path, "err", fmt.Sprintf("%+v", err),
+					"stack", string(debug.Stack()))
 
 				Handle500(w, r, err)
 			}

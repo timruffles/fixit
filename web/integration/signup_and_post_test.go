@@ -139,15 +139,21 @@ func TestCreatePostRequiresAuth(t *testing.T) {
 		"community": "swindon", // Use existing seeded community
 	}
 
+	// Configure client to NOT follow redirects so we can check the redirect response
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
 	resp, err := postMultipartForm(client, testServer.URL+"/api/post/create", postFields)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	// Should return 400 Bad Request with "not logged in" message
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	// Should return 302 Found redirecting to login
+	assert.Equal(t, http.StatusFound, resp.StatusCode)
 	
-	body := readResponseBody(t, resp)
-	assert.Contains(t, body, "not logged in")
+	// Check that it redirects to login page
+	location := resp.Header.Get("Location")
+	assert.Equal(t, "/auth/login", location)
 }
 
 // postMultipartForm sends a multipart form request

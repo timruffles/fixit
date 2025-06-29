@@ -122,14 +122,11 @@ func (h *Handler) CreatePostPostHandler(r *http.Request) (handler.Response, erro
 		return handler.BadInput(content), nil
 	}
 
-	userI, err := h.ab.CurrentUser(r)
-	if err != nil {
-		return handler.BadInput([]byte("not logged in")), nil
-	}
-
-	user, ok := userI.(auth.User)
-	if !ok {
-		return nil, errors.Errorf("unexpected user type %T", userI)
+	user, isAuthenticated := auth.RequireAuth(h.ab, r)
+	if !isAuthenticated {
+		// For now, just redirect to login without flash message
+		// TODO: Implement flash message support
+		return handler.RedirectTo("/auth/login"), nil
 	}
 
 	ctx := r.Context()

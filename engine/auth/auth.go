@@ -24,10 +24,7 @@ type Config struct {
 func Setup(client *ent.Client, cfg Config) (*authboss.Authboss, error) {
 	ab := authboss.New()
 
-	// Set up defaults first
-	defaults.SetCore(&ab.Config, false, false)
-
-	// Configure storage
+	// Configure storage first
 	ab.Config.Storage.Server = NewStorer(client)
 	sessionStorer := NewSessionStorer([]byte(cfg.SessionKey))
 	ab.Config.Storage.SessionState = sessionStorer
@@ -36,12 +33,14 @@ func Setup(client *ent.Client, cfg Config) (*authboss.Authboss, error) {
 	// Configure paths
 	ab.Config.Paths.Mount = "/auth"
 	ab.Config.Paths.AuthLoginOK = "/"
-	
 	ab.Config.Paths.RegisterOK = "/"
 	ab.Config.Paths.RootURL = cfg.RootURL
 
 	// Use our custom renderer
 	ab.Config.Core.ViewRenderer = webauth.NewRenderer()
+
+	// Set up defaults after configuring our custom components
+	defaults.SetCore(&ab.Config, false, false)
 
 	if cfg.SendGridKey != "" {
 		ab.Config.Core.Mailer = NewMailer(cfg.SendGridKey, cfg.FromName, cfg.FromEmail)
@@ -61,3 +60,19 @@ func Middleware(ab *authboss.Authboss) []mux.MiddlewareFunc {
 		},
 	}
 }
+
+// RequireAuth checks if user is authenticated
+func RequireAuth(ab *authboss.Authboss, r *http.Request) (User, bool) {
+	userI, err := ab.CurrentUser(r)
+	if err != nil {
+		return User{}, false
+	}
+
+	user, ok := userI.(User)
+	if !ok {
+		return User{}, false
+	}
+
+	return user, true
+}
+
