@@ -56,11 +56,11 @@ func init() {
 		}
 	}()
 	// communityDescCreatedAt is the schema descriptor for created_at field.
-	communityDescCreatedAt := communityFields[3].Descriptor()
+	communityDescCreatedAt := communityFields[4].Descriptor()
 	// community.DefaultCreatedAt holds the default value on creation for the created_at field.
 	community.DefaultCreatedAt = communityDescCreatedAt.Default.(func() time.Time)
 	// communityDescUpdatedAt is the schema descriptor for updated_at field.
-	communityDescUpdatedAt := communityFields[4].Descriptor()
+	communityDescUpdatedAt := communityFields[5].Descriptor()
 	// community.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	community.DefaultUpdatedAt = communityDescUpdatedAt.Default.(func() time.Time)
 	// community.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

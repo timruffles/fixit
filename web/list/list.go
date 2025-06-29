@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
@@ -43,13 +42,15 @@ func New(client *ent.Client) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/", handler.Wrap(h.handleList)).Methods("GET")
+	router.HandleFunc("/c/{slug}", handler.Wrap(h.handleList)).Methods("GET")
 }
 
 func (h *Handler) handleList(req *http.Request) (handler.Response, error) {
 	ctx := context.Background()
-	communityID := uuid.Must(uuid.NewV4())
 	filter := &community.Filter{}
+
+	vars := mux.Vars(req)
+	communityID := vars["slug"]
 
 	postItems, err := h.repo.ListPosts(ctx, communityID, filter)
 	if err != nil {

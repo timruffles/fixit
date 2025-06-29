@@ -22,6 +22,8 @@ type Community struct {
 	Name string `json:"name,omitempty"`
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty"`
+	// Location holds the value of the "location" field.
+	Location string `json:"location,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -34,7 +36,7 @@ func (*Community) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case community.FieldName, community.FieldTitle:
+		case community.FieldName, community.FieldTitle, community.FieldLocation:
 			values[i] = new(sql.NullString)
 		case community.FieldCreatedAt, community.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -72,6 +74,12 @@ func (c *Community) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
 				c.Title = value.String
+			}
+		case community.FieldLocation:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field location", values[i])
+			} else if value.Valid {
+				c.Location = value.String
 			}
 		case community.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -126,6 +134,9 @@ func (c *Community) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("title=")
 	builder.WriteString(c.Title)
+	builder.WriteString(", ")
+	builder.WriteString("location=")
+	builder.WriteString(c.Location)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))

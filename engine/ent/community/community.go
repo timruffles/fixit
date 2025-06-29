@@ -18,6 +18,8 @@ const (
 	FieldName = "name"
 	// FieldTitle holds the string denoting the title field in the database.
 	FieldTitle = "title"
+	// FieldLocation holds the string denoting the location field in the database.
+	FieldLocation = "location"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -31,6 +33,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldTitle,
+	FieldLocation,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -76,6 +79,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByTitle orders the results by the title field.
 func ByTitle(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTitle, opts...).ToFunc()
+}
+
+// ByLocation orders the results by the location field.
+func ByLocation(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLocation, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

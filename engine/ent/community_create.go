@@ -33,6 +33,20 @@ func (cc *CommunityCreate) SetTitle(s string) *CommunityCreate {
 	return cc
 }
 
+// SetLocation sets the "location" field.
+func (cc *CommunityCreate) SetLocation(s string) *CommunityCreate {
+	cc.mutation.SetLocation(s)
+	return cc
+}
+
+// SetNillableLocation sets the "location" field if the given value is not nil.
+func (cc *CommunityCreate) SetNillableLocation(s *string) *CommunityCreate {
+	if s != nil {
+		cc.SetLocation(*s)
+	}
+	return cc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (cc *CommunityCreate) SetCreatedAt(t time.Time) *CommunityCreate {
 	cc.mutation.SetCreatedAt(t)
@@ -190,6 +204,10 @@ func (cc *CommunityCreate) createSpec() (*Community, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.Title(); ok {
 		_spec.SetField(community.FieldTitle, field.TypeString, value)
 		_node.Title = value
+	}
+	if value, ok := cc.mutation.Location(); ok {
+		_spec.SetField(community.FieldLocation, field.TypeString, value)
+		_node.Location = value
 	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
 		_spec.SetField(community.FieldCreatedAt, field.TypeTime, value)

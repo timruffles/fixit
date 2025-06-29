@@ -56,6 +56,26 @@ func (cu *CommunityUpdate) SetNillableTitle(s *string) *CommunityUpdate {
 	return cu
 }
 
+// SetLocation sets the "location" field.
+func (cu *CommunityUpdate) SetLocation(s string) *CommunityUpdate {
+	cu.mutation.SetLocation(s)
+	return cu
+}
+
+// SetNillableLocation sets the "location" field if the given value is not nil.
+func (cu *CommunityUpdate) SetNillableLocation(s *string) *CommunityUpdate {
+	if s != nil {
+		cu.SetLocation(*s)
+	}
+	return cu
+}
+
+// ClearLocation clears the value of the "location" field.
+func (cu *CommunityUpdate) ClearLocation() *CommunityUpdate {
+	cu.mutation.ClearLocation()
+	return cu
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (cu *CommunityUpdate) SetUpdatedAt(t time.Time) *CommunityUpdate {
 	cu.mutation.SetUpdatedAt(t)
@@ -136,6 +156,12 @@ func (cu *CommunityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.Title(); ok {
 		_spec.SetField(community.FieldTitle, field.TypeString, value)
 	}
+	if value, ok := cu.mutation.Location(); ok {
+		_spec.SetField(community.FieldLocation, field.TypeString, value)
+	}
+	if cu.mutation.LocationCleared() {
+		_spec.ClearField(community.FieldLocation, field.TypeString)
+	}
 	if value, ok := cu.mutation.UpdatedAt(); ok {
 		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -184,6 +210,26 @@ func (cuo *CommunityUpdateOne) SetNillableTitle(s *string) *CommunityUpdateOne {
 	if s != nil {
 		cuo.SetTitle(*s)
 	}
+	return cuo
+}
+
+// SetLocation sets the "location" field.
+func (cuo *CommunityUpdateOne) SetLocation(s string) *CommunityUpdateOne {
+	cuo.mutation.SetLocation(s)
+	return cuo
+}
+
+// SetNillableLocation sets the "location" field if the given value is not nil.
+func (cuo *CommunityUpdateOne) SetNillableLocation(s *string) *CommunityUpdateOne {
+	if s != nil {
+		cuo.SetLocation(*s)
+	}
+	return cuo
+}
+
+// ClearLocation clears the value of the "location" field.
+func (cuo *CommunityUpdateOne) ClearLocation() *CommunityUpdateOne {
+	cuo.mutation.ClearLocation()
 	return cuo
 }
 
@@ -296,6 +342,12 @@ func (cuo *CommunityUpdateOne) sqlSave(ctx context.Context) (_node *Community, e
 	}
 	if value, ok := cuo.mutation.Title(); ok {
 		_spec.SetField(community.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.Location(); ok {
+		_spec.SetField(community.FieldLocation, field.TypeString, value)
+	}
+	if cuo.mutation.LocationCleared() {
+		_spec.ClearField(community.FieldLocation, field.TypeString)
 	}
 	if value, ok := cuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(community.FieldUpdatedAt, field.TypeTime, value)

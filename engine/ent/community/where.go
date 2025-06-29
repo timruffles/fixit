@@ -65,6 +65,11 @@ func Title(v string) predicate.Community {
 	return predicate.Community(sql.FieldEQ(FieldTitle, v))
 }
 
+// Location applies equality check predicate on the "location" field. It's identical to LocationEQ.
+func Location(v string) predicate.Community {
+	return predicate.Community(sql.FieldEQ(FieldLocation, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Community {
 	return predicate.Community(sql.FieldEQ(FieldCreatedAt, v))
@@ -203,6 +208,81 @@ func TitleEqualFold(v string) predicate.Community {
 // TitleContainsFold applies the ContainsFold predicate on the "title" field.
 func TitleContainsFold(v string) predicate.Community {
 	return predicate.Community(sql.FieldContainsFold(FieldTitle, v))
+}
+
+// LocationEQ applies the EQ predicate on the "location" field.
+func LocationEQ(v string) predicate.Community {
+	return predicate.Community(sql.FieldEQ(FieldLocation, v))
+}
+
+// LocationNEQ applies the NEQ predicate on the "location" field.
+func LocationNEQ(v string) predicate.Community {
+	return predicate.Community(sql.FieldNEQ(FieldLocation, v))
+}
+
+// LocationIn applies the In predicate on the "location" field.
+func LocationIn(vs ...string) predicate.Community {
+	return predicate.Community(sql.FieldIn(FieldLocation, vs...))
+}
+
+// LocationNotIn applies the NotIn predicate on the "location" field.
+func LocationNotIn(vs ...string) predicate.Community {
+	return predicate.Community(sql.FieldNotIn(FieldLocation, vs...))
+}
+
+// LocationGT applies the GT predicate on the "location" field.
+func LocationGT(v string) predicate.Community {
+	return predicate.Community(sql.FieldGT(FieldLocation, v))
+}
+
+// LocationGTE applies the GTE predicate on the "location" field.
+func LocationGTE(v string) predicate.Community {
+	return predicate.Community(sql.FieldGTE(FieldLocation, v))
+}
+
+// LocationLT applies the LT predicate on the "location" field.
+func LocationLT(v string) predicate.Community {
+	return predicate.Community(sql.FieldLT(FieldLocation, v))
+}
+
+// LocationLTE applies the LTE predicate on the "location" field.
+func LocationLTE(v string) predicate.Community {
+	return predicate.Community(sql.FieldLTE(FieldLocation, v))
+}
+
+// LocationContains applies the Contains predicate on the "location" field.
+func LocationContains(v string) predicate.Community {
+	return predicate.Community(sql.FieldContains(FieldLocation, v))
+}
+
+// LocationHasPrefix applies the HasPrefix predicate on the "location" field.
+func LocationHasPrefix(v string) predicate.Community {
+	return predicate.Community(sql.FieldHasPrefix(FieldLocation, v))
+}
+
+// LocationHasSuffix applies the HasSuffix predicate on the "location" field.
+func LocationHasSuffix(v string) predicate.Community {
+	return predicate.Community(sql.FieldHasSuffix(FieldLocation, v))
+}
+
+// LocationIsNil applies the IsNil predicate on the "location" field.
+func LocationIsNil() predicate.Community {
+	return predicate.Community(sql.FieldIsNull(FieldLocation))
+}
+
+// LocationNotNil applies the NotNil predicate on the "location" field.
+func LocationNotNil() predicate.Community {
+	return predicate.Community(sql.FieldNotNull(FieldLocation))
+}
+
+// LocationEqualFold applies the EqualFold predicate on the "location" field.
+func LocationEqualFold(v string) predicate.Community {
+	return predicate.Community(sql.FieldEqualFold(FieldLocation, v))
+}
+
+// LocationContainsFold applies the ContainsFold predicate on the "location" field.
+func LocationContainsFold(v string) predicate.Community {
+	return predicate.Community(sql.FieldContainsFold(FieldLocation, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

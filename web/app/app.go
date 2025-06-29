@@ -9,6 +9,7 @@ import (
 	"fixit/engine/community"
 	enginePost "fixit/engine/post"
 	webcommunity "fixit/web/community"
+	"fixit/web/frontpage"
 	"fixit/web/list"
 	"fixit/web/post"
 	"fixit/web/server"
@@ -53,6 +54,10 @@ func (a *App) Initialize() error {
 		return err
 	}
 
+	// Register frontpage handler
+	frontpageHandler := frontpage.New(repo)
+	a.server.RegisterHandler(frontpageHandler)
+	
 	listHandler := list.New(a.server.Client())
 	a.server.RegisterHandler(listHandler)
 	

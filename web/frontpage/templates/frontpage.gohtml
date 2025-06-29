@@ -1,0 +1,144 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Hero Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
+                Fix your neighbourhood
+            </h1>
+            <p class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
+                Report issues and get them fixed.
+                Connect with your neighbors to either fix issues yourself, or
+                make sure councils can't ignore them.
+            </p>
+            <p class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
+                The cavalry isn't coming - it's going to be people like you
+                that fix the UK by taking action right now.
+            </p>
+        </div>
+    </div>
+
+    <!-- Communities Section -->
+    <div id="communities" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900">Active Communities</h2>
+            <p class="mt-4 text-lg text-gray-600">
+                1,823 people are fixing things in 14 communities across the U.K.
+            </p>
+        </div>
+
+        {{if .Communities}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {{range .Communities}}
+            <div class="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">{{slice .Name 0 1 | upper}}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">{{.Title}}</h3>
+                            <p class="text-sm text-gray-500">/c/{{.Name}}</p>
+                        </div>
+                    </div>
+                    
+                    {{if .Location}}
+                    <div class="flex items-center text-gray-600 mb-4">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm">{{.Location}}</span>
+                    </div>
+                    {{end}}
+                    
+                    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <span>Active since {{.CreatedAt.Format "Jan 2006"}}</span>
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <a href="/c/{{.Name}}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full justify-center">
+                            View Community
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="text-center py-12">
+            <div class="max-w-md mx-auto">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m11 0a2 2 0 01-2 2H5a2 2 0 01-2-2m0 0V9a2 2 0 012-2h2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10m-9 3h8m-9 3h8m-9 3h8"/>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">No communities yet</h3>
+                <p class="mt-2 text-gray-500">Be the first to set up a community in your area!</p>
+                <div class="mt-6">
+                    <a href="/community/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Create Community
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        <div class="mt-10">
+            <p class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
+                Can't see your community! Great, time for you to take the lead,
+                and be the change you want to see.
+            </p>
+            <div class="text-center">
+                <a href="/community/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Start a community
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">How {{.AppName}} Works</h2>
+                <p class="mt-4 text-lg text-gray-600">
+                    Simple tools to report, track, and solve community issues
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Report Issues</h3>
+                    <p class="text-gray-600">
+                        Easily report problems in your community with photos and detailed descriptions.
+                    </p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Find Solutions</h3>
+                    <p class="text-gray-600">
+                        Community members collaborate to provide solutions and verify their effectiveness.
+                    </p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Build Community</h3>
+                    <p class="text-gray-600">
+                        Connect with neighbors and local organizations to create lasting positive change.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

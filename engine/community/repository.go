@@ -3,13 +3,16 @@ package community
 import (
 	"context"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/pkg/errors"
 
 	"fixit/engine/ent"
+	"fixit/engine/ent/community"
+	"fixit/engine/ent/post"
 )
 
-type Filter struct{}
+type Filter struct {
+	Location string
+}
 
 type PostListItem struct {
 	*ent.Post
@@ -26,8 +29,18 @@ func NewRepository(client *ent.Client) *Repository {
 	}
 }
 
-func (r *Repository) ListPosts(ctx context.Context, communityID uuid.UUID, filter *Filter) ([]PostListItem, error) {
+func (r *Repository) ListPosts(ctx context.Context, communitySlug string, filter *Filter) ([]PostListItem, error) {
+	// First find the community by slug
+	comm, err := r.client.Community.Query().
+		Where(community.NameEQ(communitySlug)).
+		Only(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// Then query posts for that community
 	posts, err := r.client.Post.Query().
+		Where(post.HasCommunityWith(community.ID(comm.ID))).
 		WithUser().
 		All(ctx)
 	if err != nil {
@@ -58,7 +71,8 @@ func (r *Repository) Seed(ctx context.Context) error {
 
 	comm, err := r.client.Community.Create().
 		SetName("swindon").
-		SetTitle("swindon").
+		SetTitle("Swindon Community").
+		SetLocation("Swindon, UK").
 		Save(ctx)
 	if err != nil {
 		return err
@@ -113,4 +127,19 @@ func (r *Repository) Seed(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (r *Repository) ForFrontpage(ctx context.Context, filter Filter) ([]*ent.Community, error) {
+	query := r.client.Community.Query()
+
+	if filter.Location != "" {
+		query = query.Where(community.LocationEQ(filter.Location))
+	}
+
+	communities, err := query.All(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return communities, nil
 }

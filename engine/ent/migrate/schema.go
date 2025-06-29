@@ -14,6 +14,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Size: 128},
 		{Name: "title", Type: field.TypeString, Size: 128},
+		{Name: "location", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}

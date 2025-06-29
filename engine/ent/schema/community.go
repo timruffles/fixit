@@ -34,6 +34,8 @@ func (Community) Fields() []ent.Field {
 		field.String("title").
 			MinLen(5).
 			MaxLen(128),
+		field.String("location").
+			Optional(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
