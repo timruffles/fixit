@@ -104,6 +104,37 @@
     {{end}}
 </div>
 
+<!-- Councillor Info Box -->
+<div class="mb-8 bg-blue-50 border border-blue-200 sm:rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-blue-900 mb-4">Local Councillors</h3>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="bg-white p-3 rounded-md border border-blue-100">
+            <div class="font-medium text-gray-900">Rajhia Ali</div>
+            <div class="text-sm text-gray-600">Priory Vale Ward</div>
+            <div class="text-sm text-gray-500 mb-1">Labour Party</div>
+            <a href="mailto:rajhia.ali@swindon.gov.uk" class="text-sm text-blue-600 hover:text-blue-800">Contact</a>
+        </div>
+        <div class="bg-white p-3 rounded-md border border-blue-100">
+            <div class="font-medium text-gray-900">Chris Watts</div>
+            <div class="text-sm text-gray-600">Old Town Ward</div>
+            <div class="text-sm text-gray-500 mb-1">Labour Party</div>
+            <a href="mailto:chris.watts@swindon.gov.uk" class="text-sm text-blue-600 hover:text-blue-800">Contact</a>
+        </div>
+        <div class="bg-white p-3 rounded-md border border-blue-100">
+            <div class="font-medium text-gray-900">Gayle Cook</div>
+            <div class="text-sm text-gray-600">Wroughton and Wichelstowe Ward</div>
+            <div class="text-sm text-gray-500 mb-1">Conservative and Unionist</div>
+            <a href="mailto:gayle.cook@swindon.gov.uk" class="text-sm text-blue-600 hover:text-blue-800">Contact</a>
+        </div>
+        <div class="bg-white p-3 rounded-md border border-blue-100">
+            <div class="font-medium text-gray-900">Adam Poole</div>
+            <div class="text-sm text-gray-600">Wroughton and Wichelstowe Ward</div>
+            <div class="text-sm text-gray-500 mb-1">Liberal Democrats</div>
+            <a href="mailto:adam.poole@swindon.gov.uk" class="text-sm text-blue-600 hover:text-blue-800">Contact</a>
+        </div>
+    </div>
+</div>
+
 <div class="space-y-4">
     {{range $index, $post := .Posts}}
     <div class="{{if $post.Solved}}bg-green-50 border-green-200{{else}}bg-white border-gray-200{{end}} sm:rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
